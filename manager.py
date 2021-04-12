@@ -25,7 +25,7 @@ class Manager:
 
     passwords = {}
 
-    # generates a unique number between incl. 100.000 and incl. 999999.
+    # generates a unique number between incl. 100,000 and incl. 999,999.
     def get_code(self):
         code = random.randint(100000, 999999)
 
