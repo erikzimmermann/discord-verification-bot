@@ -12,6 +12,14 @@ client = discord.Client()
 passwords = {}
 
 
+def start():
+    # Check for default setting
+    if config["token"] == "<your token here>":
+        logging.log(logging.ERROR, "You have to configure config.json before starting the discord bot!")
+    else:
+        client.run(config["token"])
+
+
 async def call_promotion(message):
     # build message
     content = "Spigot: " + message.content + "\n" \
@@ -171,9 +179,4 @@ async def on_message(message):
             # Continue promotion
             await call_promotion(message)
 
-
-# Check for default setting
-if config["token"] == "<your token here>":
-    logging.log(logging.ERROR, "You have to configure config.json before starting the discord bot!")
-else:
-    client.run(config["token"])
+start()
