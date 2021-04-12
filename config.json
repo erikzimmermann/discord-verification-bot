@@ -2,5 +2,7 @@
   "token": "<your token here>",
   "promote_channel": 0,
   "admin_channel": 0,
-  "premium_role": 0
+  "premium_role": 0,
+  "buyers_list": "https://www.spigotmc.org/resources/premium-warps-portals-and-more-warp-teleport-system-1-8-1-16.66035/buyers",
+  "conversation_title": "WarpSystem%20-%20Verification"
 }
