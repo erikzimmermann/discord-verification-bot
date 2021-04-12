@@ -129,7 +129,7 @@ async def on_reaction_add(reaction, user):
         user = data["user"]
         await user.send("**You've got a verification code!**"
                         "\nCheck your Spigot inbox 📫\n\n"
-                        "For all the lazy people: https://www.spigotmc.org/conversations/ ^^")
+                        "https://www.spigotmc.org/conversations/")
 
 
 @client.event
