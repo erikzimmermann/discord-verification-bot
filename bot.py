@@ -89,6 +89,7 @@ async def apply_premium(message, data):
 @client.event
 async def on_ready():
     logging.log(logging.INFO, "I'm ready!")
+    print("Bot started")  # Panel indication
 
 
 @client.event
