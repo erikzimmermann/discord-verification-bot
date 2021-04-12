@@ -179,4 +179,5 @@ async def on_message(message):
             # Continue promotion
             await call_promotion(message)
 
+
 start()
