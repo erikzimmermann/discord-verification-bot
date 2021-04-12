@@ -127,7 +127,7 @@ async def on_reaction_add(reaction, user):
 
         # contact user
         user = data["user"]
-        await user.send("**You have got a verification code!**"
+        await user.send("**You've got a verification code!**"
                         "\nCheck your Spigot inbox 📫\n\n"
                         "For all the lazy people: https://www.spigotmc.org/conversations/ ^^")
 
