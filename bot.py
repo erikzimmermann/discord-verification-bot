@@ -22,9 +22,9 @@ def start():
 
 async def call_promotion(message):
     # build message
-    content = "Spigot: " + message.content + "\n" \
-                                             "Buyers list: https://www.spigotmc.org/resources/premium-warps-portals-and-more-warp-teleport-system-1-8-1-16.66035/buyers\n" \
-                                             "DM: https://www.spigotmc.org/conversations/add?to=" + message.content + "&title=WarpSystem%20-%20Verification"
+    content = "Spigot: " + message.content + "\n"
+    content = content + "Buyers list: " + config["buyers_list"] + "\n"
+    content = content + "DM: https://www.spigotmc.org/conversations/add?to=" + message.content + "&title=" + config["conversation_title"]
 
     embed = discord.Embed(description=content, colour=0x12a498)
     embed.set_author(name=message.author.name, icon_url=message.author.avatar_url)
