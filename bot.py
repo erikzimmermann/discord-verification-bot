@@ -43,13 +43,6 @@ def start():
         client.run(config["discord"]["token"])
 
 
-def find(sequence, condition):
-    for x in sequence:
-        if condition(x):
-            return True
-    return False
-
-
 @client.event
 async def on_ready():
     await explanation_message.on_ready()
@@ -61,6 +54,7 @@ async def on_reaction_add(reaction, user):
     if client.user.id == user.id:
         return
 
+    # disallow all reactions in the promotion channel
     if reaction.message.channel.id == config["discord"]["promote_channel"]:
         await reaction.remove(user)
 
@@ -71,8 +65,6 @@ async def on_message(message):
         return
 
     if message.channel.id == config["discord"]["promote_channel"]:
-        print("on_message")
-
         roles = message.author.roles
         if find(roles, lambda x: x.id == config["discord"]["premium_role"]):
             await message.delete()
@@ -83,26 +75,13 @@ async def on_message(message):
         else:
             # add to queue anyway to check for currently working processes
             browsing = len(working_queue) > 0
-
             working_queue.append(message)
+
             if not browsing:
                 await start_promotion(message)
 
 
-def after_verification(user, channel, success):
-    promotions.pop(user.id)
-    if success and len(working_queue) == 0:
-        client.loop.create_task(explanation_message.update_explanation(channel))
-
-
-def after_browsing():
-    working_queue.pop(0)
-    if len(working_queue) > 0:
-        client.loop.create_task(start_promotion(working_queue[0]))
-
-
 async def start_promotion(message):
-    print("starting")
     promotions[message.author.id] = promotion.Process(
         client,
         message,
@@ -115,7 +94,30 @@ async def start_promotion(message):
 
     await message.delete()
     await promotions[message.author.id].start()
-    print("continue")
 
 
+# Will be fired when the browser is ready for the next verification.
+def after_browsing():
+    working_queue.pop(0)
+    if len(working_queue) > 0:
+        client.loop.create_task(start_promotion(working_queue[0]))
+
+
+# Will be fired when a verification has entirely completed (either cancelled or succeeded).
+def after_verification(user, channel, success):
+    promotions.pop(user.id)
+
+    # Ignore ongoing verifications since cancelled verification won't trigger an explanation update
+    if success:
+        client.loop.create_task(explanation_message.update_explanation(channel))
+
+
+def find(sequence, condition):
+    for x in sequence:
+        if condition(x):
+            return True
+    return False
+
+
+# initialize bot
 start()

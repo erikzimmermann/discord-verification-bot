@@ -87,7 +87,7 @@ class Process:
         self.database = database.Database(database_credentials)
 
     async def start(self):
-        print("Start promotion")
+        print("Starting " + self.user.name + "'s promotion")
         await self.message.update()
 
         if self.database.is_discord_name_linked(self.user.id):
@@ -99,6 +99,7 @@ class Process:
             await self.message.update()
             self.__stop__()
         else:
+            # Run check in another thread to avoid blocking the main thread
             threading.Thread(target=asyncio.run, args=(self.__check_premium__(),)).start()
 
     async def incoming_message(self, message):
@@ -109,6 +110,7 @@ class Process:
 
     def __stop__(self):
         self.database.connection.close()
+        print(self.user.name + "'s promotion has been finished")
 
     async def __apply_premium__(self):
         role = await get_role(self.guild, self.premium_role)
@@ -120,16 +122,25 @@ class Process:
 
     async def __check_premium__(self):
         forum = spigotmc.ForumAPI(self.forum_credentials, self.forum_credentials.google_chrome_location)
+        forum.debug("start " + self.spigot + "'s verification")
+
+        # thread-blocking
         if forum.is_user_premium(self.spigot):
             forum.send_message(self.spigot, self.forum_credentials.title, self.forum_credentials.content.format(code=self.code, discord=self.user.name + "#" + self.user.discriminator))
             self.message.code_received = True
         else:
             self.message.no_buyer = True
+
+        forum.debug("done")
+
+        # go back to main thread
         self.client.loop.create_task(self.__complete_browsing__())
 
     async def __complete_browsing__(self):
         await self.message.update()
         await asyncio.sleep(1)
+
+        # indicate completion
         self.run_after_browsing()
 
 
