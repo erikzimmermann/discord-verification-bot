@@ -1,9 +1,11 @@
 import json
 import logging
+
+import discord
+
 import database
 import explanation
 import promotion
-import discord
 import spigotmc
 
 config = json.load(open("config.json"))
@@ -29,6 +31,7 @@ logging.basicConfig(level=logging.INFO)
 client = discord.Client()
 
 promotions = {}
+working_queue = []
 explanation_message = explanation.Message(client, config["discord"]["promote_channel"])
 
 
@@ -68,28 +71,51 @@ async def on_message(message):
         return
 
     if message.channel.id == config["discord"]["promote_channel"]:
-        await message.delete()
+        print("on_message")
 
         roles = message.author.roles
         if find(roles, lambda x: x.id == config["discord"]["premium_role"]):
+            await message.delete()
             await promotion.Message(message, has_premium=True).update()
         elif message.author.id in promotions:
+            await message.delete()
             await promotions[message.author.id].incoming_message(message)
         else:
-            promotions[message.author.id] = promotion.Process(
-                message,
-                lambda user, success: after_verification(user, message.channel, success),
-                config["discord"]["premium_role"],
-                forum_credentials,
-                database_credentials
-            )
-            client.loop.create_task(promotions[message.author.id].start())
+            # add to queue anyway to check for currently working processes
+            browsing = len(working_queue) > 0
+
+            working_queue.append(message)
+            if not browsing:
+                await start_promotion(message)
 
 
 def after_verification(user, channel, success):
     promotions.pop(user.id)
-    if success:
+    if success and len(working_queue) == 0:
         client.loop.create_task(explanation_message.update_explanation(channel))
+
+
+def after_browsing():
+    working_queue.pop(0)
+    if len(working_queue) > 0:
+        client.loop.create_task(start_promotion(working_queue[0]))
+
+
+async def start_promotion(message):
+    print("starting")
+    promotions[message.author.id] = promotion.Process(
+        client,
+        message,
+        lambda user, success: after_verification(user, message.channel, success),
+        after_browsing,
+        config["discord"]["premium_role"],
+        forum_credentials,
+        database_credentials
+    )
+
+    await message.delete()
+    await promotions[message.author.id].start()
+    print("continue")
 
 
 start()

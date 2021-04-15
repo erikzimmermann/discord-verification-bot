@@ -1,5 +1,7 @@
 import asyncio
 import random
+import threading
+
 import discord
 import database
 import spigotmc
@@ -72,8 +74,10 @@ class Message:
 
 
 class Process:
-    def __init__(self, message, run_later, premium_role, forum_credentials, database_credentials, has_premium=False):
+    def __init__(self, client, message, run_later, run_after_browsing, premium_role, forum_credentials, database_credentials, has_premium=False):
+        self.client = client
         self.message = Message(message, has_premium, run_later)
+        self.run_after_browsing = run_after_browsing
         self.user = message.author
         self.spigot = message.content
         self.guild = message.guild
@@ -83,6 +87,7 @@ class Process:
         self.database = database.Database(database_credentials)
 
     async def start(self):
+        print("Start promotion")
         await self.message.update()
 
         if self.database.is_discord_name_linked(self.user.id):
@@ -94,7 +99,7 @@ class Process:
             await self.message.update()
             self.__stop__()
         else:
-            await self.__check_premium__()
+            threading.Thread(target=asyncio.run, args=(self.__check_premium__(),)).start()
 
     async def incoming_message(self, message):
         if self.message.code_received:
@@ -120,7 +125,12 @@ class Process:
             self.message.code_received = True
         else:
             self.message.no_buyer = True
+        self.client.loop.create_task(self.__complete_browsing__())
+
+    async def __complete_browsing__(self):
         await self.message.update()
+        await asyncio.sleep(1)
+        self.run_after_browsing()
 
 
 # Fetches the premium role with the premium_id from the config.json.

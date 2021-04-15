@@ -45,7 +45,7 @@ class ForumAPI:
             .send_keys(Keys.ENTER) \
             .perform()
 
-        self.driver.implicitly_wait(5)
+        self.driver.implicitly_wait(20)
 
         # search for element before getting the code
         input_element_totp = self.driver.find_element_by_id("ctrl_totp_code")
@@ -61,7 +61,7 @@ class ForumAPI:
             .send_keys(Keys.ENTER) \
             .perform()
 
-        self.driver.implicitly_wait(5)
+        self.driver.implicitly_wait(10)
         self.logged_in = True
 
     def is_user_premium(self, user):
@@ -70,7 +70,7 @@ class ForumAPI:
         with self.driver:
             self.driver.get("https://www.spigotmc.org/resources/" + self.credentials.resource + "/buyers/find")
 
-        self.driver.implicitly_wait(5)
+        self.driver.implicitly_wait(10)
 
         if not self.logged_in:
             self.__login__()
@@ -84,7 +84,7 @@ class ForumAPI:
             .send_keys(Keys.ENTER) \
             .perform()
 
-        self.driver.implicitly_wait(5)
+        self.driver.implicitly_wait(10)
 
         results = len(self.driver.find_elements_by_class_name("memberListItem"))
 
