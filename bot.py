@@ -103,7 +103,7 @@ def after_browsing():
         client.loop.create_task(start_promotion(working_queue[0]))
 
 
-# Will be fired when a verification has entirely completed (either cancelled or succeeded).
+# Will be fired when a verification is entirely completed (either cancelled or succeeded).
 def after_verification(user, channel, success):
     promotions.pop(user.id)
 
