@@ -1,8 +1,25 @@
 {
-  "token": "<your token here>",
-  "promote_channel": 0,
-  "admin_channel": 0,
-  "premium_role": 0,
-  "buyers_list": "https://www.spigotmc.org/resources/premium-warps-portals-and-more-warp-teleport-system-1-8-1-16.66035/buyers",
-  "conversation_title": "WarpSystem%20-%20Verification"
+  "google_chrome_location": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "discord": {
+    "token": "<your token here>",
+    "promote_channel": 0,
+    "premium_role": 0
+  },
+  "spigot_mc": {
+    "user_name": "<user>",
+    "password": "<password>",
+    "two_factor_secret": "<secret>",
+    "resource": "<resource.id>",
+    "conversation": {
+      "title": "Verification",
+      "content": "{code}"
+    }
+  },
+  "database": {
+    "database": "discord",
+    "user": "root",
+    "password": "",
+    "host": "localhost",
+    "port": 3306
+  }
 }

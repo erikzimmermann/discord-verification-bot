@@ -1,22 +1,46 @@
 import json
 import logging
-import manager
+import database
+import promotion
 import discord
+import spigotmc
 
-# Startup
 logging.basicConfig(level=logging.INFO)
 config = json.load(open("config.json"))
 client = discord.Client()
-error_notice = "*Contact CodingAir if you think this is an error.*"
-man = manager.Manager(config, client, )
+promotions = {}
+
+forum_credentials = spigotmc.Credentials(
+    config["spigot_mc"]["user_name"],
+    config["spigot_mc"]["password"],
+    config["spigot_mc"]["two_factor_secret"],
+    config["spigot_mc"]["resource"],
+    config["spigot_mc"]["conversation"]["title"],
+    config["spigot_mc"]["conversation"]["content"],
+    config["google_chrome_location"]
+)
+database_credentials = database.Credentials(
+    database=config["database"]["database"],
+    user=config["database"]["user"],
+    password=config["database"]["password"],
+    host=config["database"]["host"],
+    port=config["database"]["port"]
+)
 
 
 def start():
     # Check for default setting
-    if config["token"] == "<your token here>":
+    if config["discord"]["token"] == "<your token here>":
         logging.log(logging.ERROR, "You have to configure config.json before starting the discord bot!")
     else:
-        client.run(config["token"])
+        client.run(config["discord"]["token"])
+
+
+def find(sequence, condition):
+    for x in sequence:
+        if condition(x):
+            return True
+    return False
 
 
 @client.event
@@ -30,94 +54,26 @@ async def on_reaction_add(reaction, user):
         return
 
     message = reaction.message
-    if message.channel.id == config["promote_channel"]:
+    if message.channel.id == config["discord"]["promote_channel"]:
         await reaction.remove(user)
-    elif message.channel.id == config["admin_channel"]:
-        # catch wrong emojis
-        if reaction.emoji == "📫":
-            content = message.content
-
-            # check if password is given
-            code = man.content_to_code(content)
-            if code is None:
-                await reaction.remove(user)
-                return
-
-            data = man.passwords[code]
-            data["ready"] = True  # Approve code
-
-            # react with mailbox
-            original_message = data["message"]
-            await original_message.add_reaction("📫")
-
-            # contact user
-            user = data["user"]
-            await user.send("**You've got a verification code!**"
-                            "\nCheck your Spigot inbox 📫\n\n"
-                            "https://www.spigotmc.org/conversations/")
-        elif reaction.emoji == "❌":
-            content = message.content
-
-            # check if password is given
-            code = man.content_to_code(content)
-            if code is None:
-                await reaction.remove(user)
-                return
-
-            await man.clear_data(code, False)
-            await user.send("It seems like you **haven't bought** my resource...\n"
-                            "I'm sorry but I can't promote your account 😢\n\n" + error_notice)
-        else:
-            await reaction.remove(user)
-            return
 
 
 @client.event
 async def on_message(message):
-    if message.channel.id == config["promote_channel"]:
+    if client.user.id == message.author.id:
+        return
+
+    if message.channel.id == config["discord"]["promote_channel"]:
+        await message.delete()
+
         roles = message.author.roles
-
-        if manager.find(roles, lambda x: x.id == config["premium_role"]):
-            await message.delete()
-            await message.author.send("You already have the premium role 👀")
+        if find(roles, lambda x: x.id == config["discord"]["premium_role"]):
+            await promotion.Message(message, has_premium=True).update()
+        elif message.author.id in promotions:
+            await promotions[message.author.id].incoming_message(message)
         else:
-            content = message.content
-
-            # Check for verification code
-            try:
-                code = int(content)  # fail here if content is not an integer
-
-                # apply premium only if number is the password of that user
-                if code in man.passwords and man.passwords[code]["user"] == message.author:
-                    # check if code is authorized
-                    data = man.passwords[code]
-
-                    if not data["ready"]:
-                        await message.delete()
-                        await message.author.send("**Whoops, this was lucky** 🤐\n"
-                                                  "You've entered the correct code but CodingAir hasn't approved it yet.\n\n"
-                                                  "Please be patient 🙂")
-                        return
-
-                    await man.apply_premium(message, data["user"])
-                    await man.clear_data(code, True)
-                else:
-                    await message.delete()
-                    await message.author.send("This was the **wrong verification code** 😕\n"
-                                              "Please read the pinned message in the promote channel.\n\n" + error_notice)
-                return
-            except ValueError:
-                pass
-
-            # check if user already posted a potential Spigot name
-            messages = await message.channel.history(limit=100).flatten()
-            if manager.count(messages, lambda m: m.author == message.author) > 1:
-                await message.delete()
-                await message.author.send("You **already posted** a message containing a potential Spigot name 🤔\n\n" + error_notice)
-                return
-
-            # Continue promotion
-            await man.call_promotion(message)
+            promotions[message.author.id] = promotion.Process(message, lambda user: promotions.pop(user.id), config["discord"]["premium_role"], forum_credentials, database_credentials)
+            client.loop.create_task(promotions[message.author.id].start())
 
 
 start()
