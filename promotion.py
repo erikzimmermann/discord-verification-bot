@@ -33,7 +33,7 @@ class Message:
             title = self.user.name + "'s promotion is completed"
             content = self.user.name + " has been successfully promoted to premium ✅"
             if self.run_later is not None:
-                self.run_later(self.user)
+                self.run_later(self.user, True)
         elif self.has_premium:
             color = color_error
             title = self.user.name + "'s promotion has been cancelled"
@@ -49,7 +49,8 @@ class Message:
         elif self.code_received:
             color = color_processing
             title = "Verifying " + self.user.name
-            content = "The verification code has been sent. Check your Spigot inbox 📫"
+            content = "The verification code has been sent. Check your Spigot inbox 📫\n\n" \
+                      "https://www.spigotmc.org/conversations/"
         else:
             color = color_processing
             title = "Verifying " + self.user.name
@@ -67,7 +68,7 @@ class Message:
         await asyncio.sleep(10)
         await self.response.delete()
         if self.run_later is not None:
-            self.run_later(self.user)
+            self.run_later(self.user, False)
 
 
 class Process:
@@ -115,7 +116,7 @@ class Process:
     async def __check_premium__(self):
         forum = spigotmc.ForumAPI(self.forum_credentials, self.forum_credentials.google_chrome_location)
         if forum.is_user_premium(self.spigot):
-            forum.send_message(self.spigot, self.forum_credentials.title, self.forum_credentials.content_with_code(self.code))
+            forum.send_message(self.spigot, self.forum_credentials.title, self.forum_credentials.content.format(code=self.code, discord=self.user.name + "#" + self.user.discriminator))
             self.message.code_received = True
         else:
             self.message.no_buyer = True

@@ -14,9 +14,6 @@ class Credentials:
         self.content = content
         self.google_chrome_location = google_chrome_location
 
-    def content_with_code(self, code):
-        return self.content.format(code=code)
-
 
 class ForumAPI:
     def __init__(self, credentials, chrome_location, debugging=True):

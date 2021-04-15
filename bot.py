@@ -1,14 +1,12 @@
 import json
 import logging
 import database
+import explanation
 import promotion
 import discord
 import spigotmc
 
-logging.basicConfig(level=logging.INFO)
 config = json.load(open("config.json"))
-client = discord.Client()
-promotions = {}
 
 forum_credentials = spigotmc.Credentials(
     config["spigot_mc"]["user_name"],
@@ -26,6 +24,12 @@ database_credentials = database.Credentials(
     host=config["database"]["host"],
     port=config["database"]["port"]
 )
+
+logging.basicConfig(level=logging.INFO)
+client = discord.Client()
+
+promotions = {}
+explanation_message = explanation.Message(client, config["discord"]["promote_channel"])
 
 
 def start():
@@ -45,6 +49,7 @@ def find(sequence, condition):
 
 @client.event
 async def on_ready():
+    await explanation_message.on_ready()
     print("Bot started")  # Panel indication
 
 
@@ -53,8 +58,7 @@ async def on_reaction_add(reaction, user):
     if client.user.id == user.id:
         return
 
-    message = reaction.message
-    if message.channel.id == config["discord"]["promote_channel"]:
+    if reaction.message.channel.id == config["discord"]["promote_channel"]:
         await reaction.remove(user)
 
 
@@ -72,8 +76,20 @@ async def on_message(message):
         elif message.author.id in promotions:
             await promotions[message.author.id].incoming_message(message)
         else:
-            promotions[message.author.id] = promotion.Process(message, lambda user: promotions.pop(user.id), config["discord"]["premium_role"], forum_credentials, database_credentials)
+            promotions[message.author.id] = promotion.Process(
+                message,
+                lambda user, success: after_verification(user, message.channel, success),
+                config["discord"]["premium_role"],
+                forum_credentials,
+                database_credentials
+            )
             client.loop.create_task(promotions[message.author.id].start())
+
+
+def after_verification(user, channel, success):
+    promotions.pop(user.id)
+    if success:
+        client.loop.create_task(explanation_message.update_explanation(channel))
 
 
 start()
