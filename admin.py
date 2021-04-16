@@ -31,14 +31,14 @@ class Channel:
 
     async def incoming_message(self, message):
         command = message.content
-        if command.startswith("!verify"):
+        if command.startswith("!v"):
             command = cut(command, 7)
 
             if command.startswith("help"):
                 await self.__react__(message, 0)
                 await message.reply("**You can choose from following commands:**\n"
-                                    "`!verify reset_existing_verifications` > Removes the premium role from every member on this server"
-                                    "`!verify unlink_spigot <spigot_name>` > Unlink a specific SpigotMC user")
+                                    "`!v reset_existing_verifications` > Removes the premium role from every member on this server"
+                                    "`!v unlink_spigot <spigot_name>` > Unlink a specific SpigotMC user")
                 return
             elif command.startswith("reset_existing_verifications"):
                 await self.__react__(message, 1)
@@ -55,7 +55,7 @@ class Channel:
 
                 if len(deep) == 0:
                     await self.__react__(message, -1)
-                    await message.reply("Wrong syntax: `!verify unlink_spigot <spigot_name>`")
+                    await message.reply("Wrong syntax: `!v unlink_spigot <spigot_name>`")
                     return
 
                 await self.__react__(message, 1)
@@ -76,4 +76,4 @@ class Channel:
                 return
 
             await self.__react__(message, -1)
-            await message.reply("That's an unknown command. Try `!verify help`.")
+            await message.reply("That's an unknown command. Try `!v help`.")
