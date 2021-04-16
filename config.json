@@ -1,9 +1,15 @@
 {
   "google_chrome_location": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "expiration": 7776000,
   "discord": {
     "token": "<your token here>",
     "promote_channel": 0,
-    "premium_role": 0
+    "premium_role": 0,
+    "guild_id": 0,
+    "loading_emoji": "<:name:id>"
+  },
+  "messages": {
+    "expiration": "Hi there!\nYour premium verification on our **support discord** <:name:id> has ended.\n\nHead to **#promote** to renew it ✨"
   },
   "spigot_mc": {
     "user_name": "<user>",

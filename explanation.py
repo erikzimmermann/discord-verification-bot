@@ -8,8 +8,14 @@ class Message:
         self.client = client
         self.promote_channel = promote_channel
         self.explanation_message = None
+        self.updating = False
 
     async def update_explanation(self, channel):
+        # avoid concurrent multi updates
+        if self.updating:
+            return
+        self.updating = True
+
         if self.explanation_message is not None:
             await asyncio.sleep(5)
             await self.explanation_message.delete()
@@ -22,6 +28,7 @@ class Message:
         embed.set_author(name="How to verify", icon_url="https://i.imgur.com/ZoSmsVs.png")
 
         self.explanation_message = await channel.send(embed=embed)
+        self.updating = False
 
     async def on_ready(self):
         channel = await self.__has_old_explanation__()

@@ -3,6 +3,7 @@ import random
 import threading
 
 import discord
+
 import database
 import spigotmc
 
@@ -12,11 +13,12 @@ color_success = 0xdaa520
 
 
 class Message:
-    def __init__(self, message, has_premium, run_later=None):
+    def __init__(self, message, has_premium, loading_emoji, run_later=None):
         self.user = message.author
         self.spigot_user = message.content
         self.channel = message.channel
         self.run_later = run_later
+        self.loading_emoji = loading_emoji
 
         self.response = None
         self.has_premium = has_premium
@@ -28,7 +30,7 @@ class Message:
     async def update(self):
         if self.response is not None:
             await self.response.delete()
-            await asyncio.sleep(.1)
+            await asyncio.sleep(.5)
 
         if self.done:
             color = color_success
@@ -51,12 +53,12 @@ class Message:
         elif self.code_received:
             color = color_processing
             title = "Verifying " + self.user.name
-            content = "The verification code has been sent. Check your Spigot inbox 📫\n\n" \
+            content = "The verification code has been sent. Check your SpigotMC inbox 📫\n\n" \
                       "https://www.spigotmc.org/conversations/"
         else:
             color = color_processing
             title = "Verifying " + self.user.name
-            content = "Your verification is processing <a:pizzaspinner:832018138027261973>"
+            content = "Your verification is processing " + self.loading_emoji
 
         embed = discord.Embed(description=content, colour=color)
         embed.set_author(name=title, icon_url=self.user.avatar_url)
@@ -67,16 +69,16 @@ class Message:
             asyncio.create_task(self.__delete_response__())
 
     async def __delete_response__(self):
-        await asyncio.sleep(10)
+        await asyncio.sleep(5)
         await self.response.delete()
         if self.run_later is not None:
             self.run_later(self.user, False)
 
 
 class Process:
-    def __init__(self, client, message, run_later, run_after_browsing, premium_role, forum_credentials, database_credentials, has_premium=False):
+    def __init__(self, client, message, run_later, run_after_browsing, premium_role, forum_credentials, database_credentials, loading_emoji, has_premium=False):
         self.client = client
-        self.message = Message(message, has_premium, run_later)
+        self.message = Message(message, has_premium, loading_emoji, run_later)
         self.run_after_browsing = run_after_browsing
         self.user = message.author
         self.spigot = message.content
@@ -90,7 +92,7 @@ class Process:
         print("Starting " + self.user.name + "'s promotion")
         await self.message.update()
 
-        if self.database.is_discord_name_linked(self.user.id):
+        if self.database.is_discord_user_linked(self.user.id):
             # Skip process, user has already been linked -> re-link
             await self.__apply_premium__()
             self.__stop__()
@@ -113,8 +115,7 @@ class Process:
         print(self.user.name + "'s promotion has been finished")
 
     async def __apply_premium__(self):
-        role = await get_role(self.guild, self.premium_role)
-        await self.user.add_roles(role)
+        await self.user.add_roles(self.premium_role)
 
         self.message.done = True
         await self.message.update()
@@ -138,18 +139,7 @@ class Process:
 
     async def __complete_browsing__(self):
         await self.message.update()
-        await asyncio.sleep(1)
+        await asyncio.sleep(.5)
 
         # indicate completion
         self.run_after_browsing()
-
-
-# Fetches the premium role with the premium_id from the config.json.
-async def get_role(guild, role_id):
-    roles = await guild.fetch_roles()
-
-    for role in roles:
-        if role.id == role_id:
-            return role
-
-    return None

@@ -1,5 +1,7 @@
+import asyncio
 import json
 import logging
+import threading
 
 import discord
 
@@ -9,6 +11,25 @@ import promotion
 import spigotmc
 
 config = json.load(open("config.json"))
+
+
+class Discord:
+    def __init__(self):
+        self.guild = None
+        self.premium_role = None
+
+    async def fetch(self):
+        self.guild = await client.fetch_guild(config["discord"]["guild_id"])
+        self.premium_role = await self.__fetch_role__()
+
+    # Fetches the premium role with the premium_id from the config.json.
+    async def __fetch_role__(self):
+        roles = await self.guild.fetch_roles()
+        for role in roles:
+            if role.id == config["discord"]["premium_role"]:
+                return role
+        return None
+
 
 forum_credentials = spigotmc.Credentials(
     config["spigot_mc"]["user_name"],
@@ -29,6 +50,7 @@ database_credentials = database.Credentials(
 
 logging.basicConfig(level=logging.INFO)
 client = discord.Client()
+discord_variables = Discord()
 
 promotions = {}
 working_queue = []
@@ -40,12 +62,17 @@ def start():
     if config["discord"]["token"] == "<your token here>":
         logging.log(logging.ERROR, "You have to configure config.json before starting the discord bot!")
     else:
+        if config["expiration"] > 0:
+            threading.Thread(target=asyncio.run, args=(schedule_expiration_task(),)).start()
+
+        # thread blocking
         client.run(config["discord"]["token"])
 
 
 @client.event
 async def on_ready():
     await explanation_message.on_ready()
+    await discord_variables.fetch()
     print("Bot started")  # Panel indication
 
 
@@ -68,7 +95,10 @@ async def on_message(message):
         roles = message.author.roles
         if find(roles, lambda x: x.id == config["discord"]["premium_role"]):
             await message.delete()
-            await promotion.Message(message, has_premium=True).update()
+            await asyncio.sleep(.5)
+            await promotion.Message(message, True, config["discord"]["loading_emoji"]).update()
+        elif find(working_queue, lambda m: m.author.id == message.author.id):
+            await message.delete()
         elif message.author.id in promotions:
             await message.delete()
             await promotions[message.author.id].incoming_message(message)
@@ -79,6 +109,8 @@ async def on_message(message):
 
             if not browsing:
                 await start_promotion(message)
+            else:
+                await message.add_reaction("👌")
 
 
 async def start_promotion(message):
@@ -87,12 +119,14 @@ async def start_promotion(message):
         message,
         lambda user, success: after_verification(user, message.channel, success),
         after_browsing,
-        config["discord"]["premium_role"],
+        discord_variables.premium_role,
         forum_credentials,
-        database_credentials
+        database_credentials,
+        config["discord"]["loading_emoji"]
     )
 
     await message.delete()
+    await asyncio.sleep(.5)
     await promotions[message.author.id].start()
 
 
@@ -110,6 +144,30 @@ def after_verification(user, channel, success):
     # Ignore ongoing verifications since cancelled verification won't trigger an explanation update
     if success:
         client.loop.create_task(explanation_message.update_explanation(channel))
+
+
+async def schedule_expiration_task():
+    while True:
+        db = database.Database(database_credentials)
+
+        expired = db.fetch_expired_links(config["expiration"])
+        if expired is not None:
+            db.unlink_discord_ids(expired)
+        db.connection.close()
+
+        if expired is not None:
+            client.loop.create_task(call_expirations(expired))
+
+        await asyncio.sleep(5)
+
+
+async def call_expirations(expired_users):
+    for user_id in expired_users:
+        member = await discord_variables.guild.fetch_member(user_id)
+
+        if member is not None:
+            await member.remove_roles(discord_variables.premium_role)
+            await member.send(config["messages"]["expiration"])
 
 
 def find(sequence, condition):

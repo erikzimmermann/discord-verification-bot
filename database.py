@@ -37,15 +37,36 @@ class Database:
 
     def is_spigot_name_linked(self, spigot_name):
         cursor = self.connection.cursor()
-        cursor.execute("SELECT COUNT(spigot) FROM `spigot-verification` WHERE spigot='" + spigot_name + "' LIMIT 1")
+        cursor.execute("SELECT COUNT(spigot) FROM `spigot-verification` WHERE spigot = '" + spigot_name + "' LIMIT 1")
         result = cursor.fetchall()
         return result[0][0] > 0
 
-    def is_discord_name_linked(self, discord_user_id):
+    def is_discord_user_linked(self, discord_user_id):
         cursor = self.connection.cursor()
-        cursor.execute("SELECT COUNT(discord_id) FROM `spigot-verification` WHERE discord_id='" + str(discord_user_id) + "' LIMIT 1")
+        cursor.execute("SELECT COUNT(discord_id) FROM `spigot-verification` WHERE discord_id = '" + str(discord_user_id) + "' LIMIT 1")
         result = cursor.fetchall()
         return result[0][0] > 0
+
+    # expiration_time in seconds
+    def fetch_expired_links(self, expiration_time):
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT discord_id FROM `spigot-verification` WHERE linked_at < now() - interval " + str(expiration_time) + " second")
+        result = cursor.fetchall()
+
+        if len(result) == 0:
+            return None
+        else:
+            return result[0]
+
+    def unlink_discord_ids(self, discord_user_ids):
+        cursor = self.connection.cursor()
+
+        # remove last ',' in array
+        array = str(discord_user_ids)
+        array = array[0:len(array) - 2] + ")"
+
+        cursor.execute("DELETE FROM `spigot-verification` WHERE discord_id in " + array)
+        self.connection.commit()
 
     def link(self, spigot_name, discord_user):
         cursor = self.connection.cursor()
