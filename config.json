@@ -4,6 +4,7 @@
   "discord": {
     "token": "<your token here>",
     "promote_channel": 0,
+	"admin_channel": 0,
     "premium_role": 0,
     "guild_id": 0,
     "loading_emoji": "<:name:id>"

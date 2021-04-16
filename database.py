@@ -35,6 +35,16 @@ class Database:
                        "UNIQUE (discord_id)"
                        ")")
 
+    def get_linked_discord_user_id(self, spigot_name):
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT discord_id FROM `spigot-verification` WHERE spigot = '" + spigot_name + "' LIMIT 1")
+        result = cursor.fetchall()
+
+        if len(result) == 0:
+            return None
+        else:
+            return result[0][0]
+
     def is_spigot_name_linked(self, spigot_name):
         cursor = self.connection.cursor()
         cursor.execute("SELECT COUNT(spigot) FROM `spigot-verification` WHERE spigot = '" + spigot_name + "' LIMIT 1")
@@ -66,6 +76,11 @@ class Database:
         array = array[0:len(array) - 2] + ")"
 
         cursor.execute("DELETE FROM `spigot-verification` WHERE discord_id in " + array)
+        self.connection.commit()
+
+    def unlink_spigot_name(self, spigot_name):
+        cursor = self.connection.cursor()
+        cursor.execute("DELETE FROM `spigot-verification` WHERE spigot = '%s'", spigot_name)
         self.connection.commit()
 
     def link(self, spigot_name, discord_user):

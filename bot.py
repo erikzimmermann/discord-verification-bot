@@ -9,6 +9,7 @@ import database
 import explanation
 import promotion
 import spigotmc
+import admin
 
 config = json.load(open("config.json"))
 
@@ -49,8 +50,13 @@ database_credentials = database.Credentials(
 )
 
 logging.basicConfig(level=logging.INFO)
-client = discord.Client()
+
+intents = discord.Intents.default()
+intents.members = True
+
+client = discord.Client(intents=intents)
 discord_variables = Discord()
+admin_channel = admin.Channel(client, discord_variables, database_credentials, config)
 
 promotions = {}
 working_queue = []
@@ -92,8 +98,7 @@ async def on_message(message):
         return
 
     if message.channel.id == config["discord"]["promote_channel"]:
-        roles = message.author.roles
-        if find(roles, lambda x: x.id == config["discord"]["premium_role"]):
+        if discord_variables.premium_role in message.author.roles:
             await message.delete()
             await asyncio.sleep(.5)
             await promotion.Message(message, True, config["discord"]["loading_emoji"]).update()
@@ -111,6 +116,8 @@ async def on_message(message):
                 await start_promotion(message)
             else:
                 await message.add_reaction("👌")
+    if message.channel.id == config["discord"]["admin_channel"]:
+        await admin_channel.incoming_message(message)
 
 
 async def start_promotion(message):
