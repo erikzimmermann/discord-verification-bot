@@ -37,7 +37,7 @@ class Channel:
             if command.startswith("help"):
                 await self.__react__(message, 0)
                 await message.reply("**You can choose from following commands:**\n"
-                                    "`!v reset_existing_verifications` > Removes the premium role from every member on this server"
+                                    "`!v reset_existing_verifications` > Removes the premium role from every member on this server\n"
                                     "`!v unlink_spigot <spigot_name>` > Unlink a specific SpigotMC user")
                 return
             elif command.startswith("reset_existing_verifications"):
