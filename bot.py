@@ -18,11 +18,13 @@ class Discord:
     def __init__(self):
         self.guild = None
         self.premium_role = None
+        self.admin_channel = None
         self.stopping = False
 
     async def fetch(self):
         self.guild = await client.fetch_guild(config["discord"]["guild_id"])
         self.premium_role = await self.__fetch_role__()
+        self.admin_channel = await client.fetch_channel(config["discord"]["admin_channel"])
 
     # Fetches the premium role with the premium_id from the config.json.
     async def __fetch_role__(self):
@@ -156,6 +158,9 @@ def after_verification(user, channel, success):
 
 async def schedule_expiration_task():
     while not discord_variables.stopping:
+        # sleep before run --> Avoid sending messages to expired users
+        await asyncio.sleep(60)
+
         db = database.Database(database_credentials)
 
         expired = db.fetch_expired_links(config["expiration"])
@@ -166,8 +171,6 @@ async def schedule_expiration_task():
         if expired is not None:
             client.loop.create_task(call_expirations(expired))
 
-        await asyncio.sleep(5)
-
 
 async def call_expirations(expired_users):
     for user_id in expired_users:
@@ -175,7 +178,13 @@ async def call_expirations(expired_users):
 
         if member is not None:
             await member.remove_roles(discord_variables.premium_role)
-            await member.send(config["messages"]["expiration"])
+
+            try:
+                # some users may disallow private messages
+                await member.send(config["messages"]["expiration"])
+            except:
+                await discord_variables.admin_channel.send("Could not contact " + member.name + "#" + member.discriminator + " regarding their premium expiration.")
+                pass
 
 
 def find(sequence, condition):
