@@ -26,6 +26,7 @@ class Message:
         self.spigot_already_linked = False
         self.code_received = False
         self.done = False
+        self.error = False
 
     async def update(self):
         if self.response is not None:
@@ -38,6 +39,10 @@ class Message:
             content = self.user.name + " has been successfully promoted to premium ✅"
             if self.run_later is not None:
                 self.run_later(self.user, True)
+        elif self.error:
+            color = color_error
+            title = self.user.name + "'s promotion has been cancelled"
+            content = "An error occurred. Please try it again."
         elif self.has_premium:
             color = color_error
             title = self.user.name + "'s promotion has been cancelled"
@@ -58,7 +63,7 @@ class Message:
         else:
             color = color_processing
             title = "Verifying " + self.user.name
-            content = "Your verification is processing " + self.loading_emoji
+            content = "Your verification is processing. Please wait " + self.loading_emoji
 
         embed = discord.Embed(description=content, colour=color)
         embed.set_author(name=title, icon_url=self.user.avatar_url)
@@ -125,14 +130,18 @@ class Process:
         forum = spigotmc.ForumAPI(self.forum_credentials, self.forum_credentials.google_chrome_location)
         forum.debug("start " + self.spigot + "'s verification")
 
-        # thread-blocking
-        if forum.is_user_premium(self.spigot):
-            forum.send_message(self.spigot, self.forum_credentials.title, self.forum_credentials.content.format(code=self.code, discord=self.user.name + "#" + self.user.discriminator))
-            self.message.code_received = True
-        else:
-            self.message.no_buyer = True
+        try:
+            # thread-blocking
+            if forum.is_user_premium(self.spigot):
+                forum.send_message(self.spigot, self.forum_credentials.title, self.forum_credentials.content.format(code=self.code, discord=self.user.name + "#" + self.user.discriminator))
+                self.message.code_received = True
+            else:
+                self.message.no_buyer = True
 
-        forum.debug("done")
+            forum.debug("done")
+        except:
+            forum.debug("an error occured")
+            self.message.error = True
 
         # go back to main thread
         self.client.loop.create_task(self.__complete_browsing__())

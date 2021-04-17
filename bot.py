@@ -18,6 +18,7 @@ class Discord:
     def __init__(self):
         self.guild = None
         self.premium_role = None
+        self.stopping = False
 
     async def fetch(self):
         self.guild = await client.fetch_guild(config["discord"]["guild_id"])
@@ -154,7 +155,7 @@ def after_verification(user, channel, success):
 
 
 async def schedule_expiration_task():
-    while True:
+    while not discord_variables.stopping:
         db = database.Database(database_credentials)
 
         expired = db.fetch_expired_links(config["expiration"])
@@ -186,3 +187,4 @@ def find(sequence, condition):
 
 # initialize bot
 start()
+discord_variables.stopping = True
