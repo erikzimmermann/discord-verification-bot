@@ -120,3 +120,5 @@ class ForumAPI:
             .send_keys(Keys.TAB) \
             .send_keys(Keys.ENTER) \
             .perform()
+
+        self.driver.implicitly_wait(5)
