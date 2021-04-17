@@ -74,14 +74,14 @@ class Message:
             asyncio.create_task(self.__delete_response__())
 
     async def __delete_response__(self):
-        await asyncio.sleep(5)
+        await asyncio.sleep(10)
         await self.response.delete()
         if self.run_later is not None:
             self.run_later(self.user, False)
 
 
 class Process:
-    def __init__(self, client, message, run_later, run_after_browsing, premium_role, forum_credentials, database_credentials, loading_emoji, has_premium=False):
+    def __init__(self, client, message, run_later, run_after_browsing, premium_role, forum_credentials, database_credentials, loading_emoji, logger, has_premium=False):
         self.client = client
         self.message = Message(message, has_premium, loading_emoji, run_later)
         self.run_after_browsing = run_after_browsing
@@ -92,9 +92,10 @@ class Process:
         self.forum_credentials = forum_credentials
         self.code = random.randint(100000, 999999)
         self.database = database.Database(database_credentials)
+        self.logger = logger
 
     async def start(self):
-        print("Starting " + self.user.name + "'s promotion")
+        self.logger.info("Starting " + self.user.name + "'s promotion")
         await self.message.update()
 
         if self.database.is_discord_user_linked(self.user.id):
@@ -117,7 +118,7 @@ class Process:
 
     def __stop__(self):
         self.database.connection.close()
-        print(self.user.name + "'s promotion has been finished")
+        self.logger.info(self.user.name + "'s promotion has been finished")
 
     async def __apply_premium__(self):
         await self.user.add_roles(self.premium_role)
@@ -127,7 +128,7 @@ class Process:
         self.__stop__()
 
     async def __check_premium__(self):
-        forum = spigotmc.ForumAPI(self.forum_credentials, self.forum_credentials.google_chrome_location)
+        forum = spigotmc.ForumAPI(self.forum_credentials, self.forum_credentials.google_chrome_location, self.logger)
         forum.debug("start " + self.spigot + "'s verification")
 
         try:

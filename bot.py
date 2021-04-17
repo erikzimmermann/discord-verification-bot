@@ -52,7 +52,11 @@ database_credentials = database.Credentials(
     port=config["database"]["port"]
 )
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(filename="log.txt",
+                    filemode='a',
+                    format='%(asctime)s %(name)s %(levelname)s %(message)s',
+                    datefmt='%H:%M:%S',
+                    level=logging.INFO)
 
 intents = discord.Intents.default()
 intents.members = True
@@ -82,7 +86,7 @@ def start():
 async def on_ready():
     await explanation_message.on_ready()
     await discord_variables.fetch()
-    print("Bot started")  # Panel indication
+    logging.info("Bot started")  # Panel indication
 
 
 @client.event
@@ -132,7 +136,8 @@ async def start_promotion(message):
         discord_variables.premium_role,
         forum_credentials,
         database_credentials,
-        config["discord"]["loading_emoji"]
+        config["discord"]["loading_emoji"],
+        logging
     )
 
     await message.delete()
@@ -195,5 +200,6 @@ def find(sequence, condition):
 
 
 # initialize bot
+logging.info("\n\n##############################################################################\n")
 start()
 discord_variables.stopping = True
