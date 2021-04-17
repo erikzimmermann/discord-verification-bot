@@ -34,7 +34,6 @@ class ForumAPI:
     def __login__(self):
         self.debug("logging in")
 
-        self.driver.save_screenshot("screen_login_1.png")
         input_element_username = self.driver.find_element_by_id("ctrl_pageLogin_login")
         ActionChains(self.driver) \
             .move_to_element(input_element_username) \
@@ -47,18 +46,15 @@ class ForumAPI:
             .send_keys(Keys.ENTER) \
             .perform()
 
-        self.driver.save_screenshot("screen_login_2.png")
         self.driver.implicitly_wait(20)
 
         # search for element before getting the code
         input_element_totp = self.driver.find_element_by_id("ctrl_totp_code")
-        self.driver.save_screenshot("screen_login_3.png")
 
         totp = pyotp.TOTP(self.credentials.two_factor_secret)
         tfa_factor = totp.now()
         self.debug("entering two-factor-authentication-code: " + tfa_factor)
 
-        self.driver.save_screenshot("screen_login_4.png")
         ActionChains(self.driver) \
             .move_to_element(input_element_totp) \
             .click(input_element_totp) \
@@ -67,7 +63,6 @@ class ForumAPI:
             .perform()
 
         self.driver.implicitly_wait(10)
-        self.driver.save_screenshot("screen_login_5.png")
         self.logged_in = True
 
     def is_user_premium(self, user):
@@ -76,7 +71,6 @@ class ForumAPI:
         with self.driver:
             self.driver.get("https://www.spigotmc.org/resources/" + self.credentials.resource + "/buyers/find")
 
-        self.driver.save_screenshot("screen_premium_1.png")
         self.driver.implicitly_wait(10)
 
         if not self.logged_in:
@@ -84,7 +78,6 @@ class ForumAPI:
 
         self.debug("finding user: " + user)
         input_element_search = self.driver.find_element_by_name("username")
-        self.driver.save_screenshot("screen_premium_2.png")
         ActionChains(self.driver) \
             .move_to_element(input_element_search) \
             .click(input_element_search) \
@@ -93,7 +86,6 @@ class ForumAPI:
             .perform()
 
         self.driver.implicitly_wait(10)
-        self.driver.save_screenshot("screen_premium_3.png")
 
         results = len(self.driver.find_elements_by_class_name("memberListItem"))
 
