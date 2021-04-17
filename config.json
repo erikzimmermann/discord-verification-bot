@@ -10,7 +10,12 @@
     "loading_emoji": "<:name:id>"
   },
   "messages": {
-    "expiration": "Hi there!\nYour premium verification on our **support discord** <:name:id> has ended.\n\nHead to **#promote** to renew it ✨"
+    "expiration": "Hi there!\nYour premium verification on our **support discord** <:name:id> has ended.\n\nHead to **#promote** to renew it ✨",
+    "explanation": {
+      "title_image_url": "https://i.imgur.com/ZoSmsVs.png",
+      "title": "How to verify",
+      "content": "Just enter your **SpigotMC username** in this chat.\n\nYou will get a verification number via SpigotMC which then have to be confirmed in this channel.\n\n*Promotions must be renewed after 3 months.*"
+    }
   },
   "spigot_mc": {
     "user_name": "<user>",

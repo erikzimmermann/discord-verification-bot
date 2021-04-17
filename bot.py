@@ -63,7 +63,7 @@ admin_channel = admin.Channel(client, discord_variables, database_credentials, c
 
 promotions = {}
 working_queue = []
-explanation_message = explanation.Message(client, config["discord"]["promote_channel"])
+explanation_message = explanation.Message(client, config["discord"]["promote_channel"], config["messages"]["explanation"])
 
 
 def start():

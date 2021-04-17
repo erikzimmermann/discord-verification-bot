@@ -4,9 +4,10 @@ import discord
 
 
 class Message:
-    def __init__(self, client, promote_channel):
+    def __init__(self, client, promote_channel, config):
         self.client = client
         self.promote_channel = promote_channel
+        self.config = config
         self.explanation_message = None
         self.updating = False
 
@@ -21,11 +22,8 @@ class Message:
             await self.explanation_message.delete()
             await asyncio.sleep(.5)
 
-        content = "Just enter your **SpigotMC username** in this chat.\n\n" \
-                  "You will get a verification number via SpigotMC which then have to be confirmed in this channel."
-
-        embed = discord.Embed(description=content, colour=0x327fa8)
-        embed.set_author(name="How to verify", icon_url="https://i.imgur.com/ZoSmsVs.png")
+        embed = discord.Embed(description=self.config["content"], colour=0x327fa8)
+        embed.set_author(name=self.config["title"], icon_url=self.config["title_image_url"])
 
         self.explanation_message = await channel.send(embed=embed)
         self.updating = False
