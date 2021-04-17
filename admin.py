@@ -32,7 +32,7 @@ class Channel:
     async def incoming_message(self, message):
         command = message.content
         if command.startswith("!v"):
-            command = cut(command, 7)
+            command = cut(command, 2)
 
             if command.startswith("help"):
                 await self.__react__(message, 0)
