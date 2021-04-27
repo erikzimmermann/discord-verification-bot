@@ -20,6 +20,8 @@ class Discord:
         self.premium_role = None
         self.admin_channel = None
         self.stopping = False
+        self.promotions = {}
+        self.working_queue = []
 
     async def fetch(self):
         self.guild = await client.fetch_guild(config["discord"]["guild_id"])
@@ -65,8 +67,6 @@ client = discord.Client(intents=intents)
 discord_variables = Discord()
 admin_channel = admin.Channel(client, discord_variables, database_credentials, config)
 
-promotions = {}
-working_queue = []
 explanation_message = explanation.Message(client, config["discord"]["promote_channel"], config["messages"]["explanation"])
 
 
@@ -109,15 +109,15 @@ async def on_message(message):
             await message.delete()
             await asyncio.sleep(.5)
             await promotion.Message(message, True, config["discord"]["loading_emoji"]).update()
-        elif find(working_queue, lambda m: m.author.id == message.author.id):
+        elif find(discord_variables.working_queue, lambda m: m.author.id == message.author.id):
             await message.delete()
-        elif message.author.id in promotions:
+        elif message.author.id in discord_variables.promotions:
             await message.delete()
-            await promotions[message.author.id].incoming_message(message)
+            await discord_variables.promotions[message.author.id].incoming_message(message)
         else:
             # add to queue anyway to check for currently working processes
-            browsing = len(working_queue) > 0
-            working_queue.append(message)
+            browsing = len(discord_variables.working_queue) > 0
+            discord_variables.working_queue.append(message)
 
             if not browsing:
                 await start_promotion(message)
@@ -128,7 +128,7 @@ async def on_message(message):
 
 
 async def start_promotion(message):
-    promotions[message.author.id] = promotion.Process(
+    discord_variables.promotions[message.author.id] = promotion.Process(
         client,
         message,
         lambda user, success: after_verification(user, message.channel, success),
@@ -142,19 +142,19 @@ async def start_promotion(message):
 
     await message.delete()
     await asyncio.sleep(.5)
-    await promotions[message.author.id].start()
+    await discord_variables.promotions[message.author.id].start()
 
 
 # Will be fired when the browser is ready for the next verification.
 def after_browsing():
-    working_queue.pop(0)
-    if len(working_queue) > 0:
-        client.loop.create_task(start_promotion(working_queue[0]))
+    discord_variables.working_queue.pop(0)
+    if len(discord_variables.working_queue) > 0:
+        client.loop.create_task(start_promotion(discord_variables.working_queue[0]))
 
 
 # Will be fired when a verification is entirely completed (either cancelled or succeeded).
 def after_verification(user, channel, success):
-    promotions.pop(user.id)
+    discord_variables.promotions.pop(user.id)
 
     # Ignore ongoing verifications since cancelled verification won't trigger an explanation update
     if success:

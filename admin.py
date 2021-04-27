@@ -38,7 +38,8 @@ class Channel:
                 await self.__react__(message, 0)
                 await message.reply("**You can choose from following commands:**\n"
                                     "`!v reset_existing_verifications` > Removes the premium role from every member on this server\n"
-                                    "`!v unlink_spigot <spigot_name>` > Unlink a specific SpigotMC user")
+                                    "`!v unlink_spigot <spigot_name>` > Unlink a specific SpigotMC user\n"
+                                    "`!v cancel <discord_id>` > Remove a specific user from a working list")
                 return
             elif command.startswith("reset_existing_verifications"):
                 await self.__react__(message, 1)
@@ -73,6 +74,46 @@ class Channel:
                     await message.reply("The link between the SpigotMC username `" + deep + "` and the Discord user `" + user.name + "#" + user.discriminator + "` has been removed.")
 
                 db.connection.close()
+                return
+            elif command.startswith("cancel"):
+                deep = cut(command, 6)
+
+                if len(deep) == 0:
+                    await self.__react__(message, -1)
+                    await message.reply("Wrong syntax: `!v cancel <discord_id>`")
+                    return
+
+                try:
+                    user_id = int(deep)
+                    found_promoting = user_id in self.discord_variables.promotions
+                    if found_promoting:
+                        self.discord_variables.promotions.pop(user_id)
+
+                    found_working = False
+                    index = 0
+                    for messages in self.discord_variables.working_queue:
+                        if messages.author.id == user_id:
+                            found_working = True
+                            break
+                        index = index + 1
+
+                    if found_working:
+                        self.discord_variables.working_queue.pop(index)
+
+                    if found_promoting and found_working:
+                        await message.reply("I've removed `" + deep + "` from both lists, promoting and browsing.")
+                    elif found_working:
+                        await message.reply("I've removed `" + deep + "` from the browsing list.")
+                    elif found_promoting:
+                        await message.reply("I've removed `" + deep + "` from the promoting list.")
+                    else:
+                        await message.reply("The user id `" + deep + "` could not be found in a list.")
+
+                    await self.__react__(message, 0)
+                except:
+                    await message.reply("Wrong syntax: `!v cancel <discord_id>`")
+                    await self.__react__(message, -1)
+
                 return
 
             await self.__react__(message, -1)
