@@ -1,7 +1,25 @@
-import pyotp
+import base64
+import hashlib
+import hmac
+import struct
+import time
+
 import undetected_chromedriver.v2 as uc
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
+
+
+def get_hotp_token(secret, intervals_no):
+    key = base64.b32decode(secret, True)
+    msg = struct.pack(">Q", intervals_no)
+    h = hmac.new(key, msg, hashlib.sha1).digest()
+    o = ord(chr(h[19])) & 15
+    h = (struct.unpack(">I", h[o:o + 4])[0] & 0x7fffffff) % 1000000
+    return h
+
+
+def get_totp_token(secret):
+    return get_hotp_token(secret, intervals_no=int(time.time()) // 30)
 
 
 class Credentials:
@@ -46,13 +64,13 @@ class ForumAPI:
             .send_keys(Keys.ENTER) \
             .perform()
 
-        self.driver.implicitly_wait(20)
+        self.debug("calculating two-factor-authentication-code")
+        self.driver.implicitly_wait(10)
 
         # search for element before getting the code
         input_element_totp = self.driver.find_element_by_id("ctrl_totp_code")
 
-        totp = pyotp.TOTP(self.credentials.two_factor_secret)
-        tfa_factor = totp.now()
+        tfa_factor = str(get_totp_token(self.credentials.two_factor_secret))
         self.debug("entering two-factor-authentication-code: " + tfa_factor)
 
         ActionChains(self.driver) \
