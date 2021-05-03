@@ -140,8 +140,8 @@ class Process:
                 self.message.no_buyer = True
 
             forum.debug("done")
-        except:
-            forum.debug("an error occured")
+        except Exception as e:
+            forum.debug("an error occurred: " + str(e))
             self.message.error = True
 
         # go back to main thread
