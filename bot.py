@@ -146,7 +146,7 @@ async def start_promotion(message):
 
 
 # Will be fired when the browser is ready for the next verification.
-def after_browsing():
+async def after_browsing():
     discord_variables.working_queue.pop(0)
     if len(discord_variables.working_queue) > 0:
         client.loop.create_task(start_promotion(discord_variables.working_queue[0]))
