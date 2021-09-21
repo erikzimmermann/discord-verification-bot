@@ -149,7 +149,9 @@ class Process:
 
     async def __complete_browsing__(self):
         await self.message.update()
-        await asyncio.sleep(.5)
+
+        # add bigger delay to avoid SpigotMC's message cooldown
+        await asyncio.sleep(20)
 
         # indicate completion
         self.run_after_browsing()
