@@ -139,13 +139,13 @@ class Process:
             else:
                 self.message.no_buyer = True
 
-            # close browser
-            forum.close()
-
             forum.debug("done")
         except Exception as e:
             forum.debug("an error occurred: " + str(e))
             self.message.error = True
+
+        # close browser
+        forum.close()
 
         # go back to main thread
         await self.__complete_browsing__()
