@@ -145,13 +145,12 @@ class Process:
             self.message.error = True
 
         # go back to main thread
-        self.client.loop.create_task(self.__complete_browsing__())
+        await self.__complete_browsing__()
 
     async def __complete_browsing__(self):
-        await self.message.update()
+        self.client.loop.create_task(self.message.update())
 
         # add bigger delay to avoid SpigotMC's message cooldown
         await asyncio.sleep(20)
 
-        # indicate completion
-        self.run_after_browsing()
+        self.client.loop.create_task(self.run_after_browsing())
