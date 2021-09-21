@@ -132,3 +132,6 @@ class ForumAPI:
             .perform()
 
         self.driver.implicitly_wait(5)
+
+    def close(self):
+        self.driver.close()
