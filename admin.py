@@ -4,7 +4,7 @@ import database
 
 def cut(s, index):
     s = s[index:]
-    if s.startswith(" "):
+    while s.startswith(" "):
         s = s[1:]
     return s
 
@@ -39,7 +39,8 @@ class Channel:
                 await message.reply("**You can choose from following commands:**\n"
                                     "`!v reset_existing_verifications` > Removes the premium role from every member on this server\n"
                                     "`!v unlink_spigot <spigot_name>` > Unlink a specific SpigotMC user\n"
-                                    "`!v cancel <discord_id>` > Remove a specific user from a working list")
+                                    "`!v cancel <discord_id>` > Remove a specific user from a working list\n"
+                                    "`!v promote <spigot_name> <discord_id>` > Promotes a spigot/discord user")
                 return
             elif command.startswith("reset_existing_verifications"):
                 await self.__react__(message, 1)
@@ -114,6 +115,51 @@ class Channel:
                     await message.reply("Wrong syntax: `!v cancel <discord_id>`")
                     await self.__react__(message, -1)
 
+                return
+            elif command.startswith("promote"):
+                deep = cut(command, 7)
+                args = deep.split()
+
+                if len(args) < 2:
+                    await self.__react__(message, -1)
+                    await message.reply("Wrong syntax: `!v promote <spigot_name> <discord_name#tag>`")
+                    return
+
+                name_spigot = args[0]
+                id_discord = args[1]
+
+                if len(name_spigot) == 0 or not id_discord.isdigit():
+                    await self.__react__(message, -1)
+                    await message.reply("Wrong syntax: `!v promote <spigot_name> <discord_id>`")
+                    return
+
+                await self.__react__(message, 1)
+                db = database.Database(self.database_credentials)
+
+                target_user = await message.guild.fetch_member(id_discord)
+
+                if target_user is None:
+                    await self.__react__(message, -1)
+                    await message.reply("The discord user with id '" + id_discord + "' could not be found.")
+                    return
+
+                if db.is_spigot_name_linked(name_spigot):
+                    await self.__react__(message, -1)
+                    await message.reply("The spigot user '" + name_spigot + "' is already linked.")
+                    return
+
+                if db.is_discord_user_linked(id_discord):
+                    await self.__react__(message, -1)
+                    await message.reply("The discord user '" + target_user.name + "#" + target_user.discriminator + "' is already linked.")
+                    return
+
+                db.link(name_spigot, target_user)
+                await target_user.add_roles(self.discord_variables.premium_role)
+
+                await self.__react__(message, 0)
+                await message.reply("The SpigotMC username `" + name_spigot + "` and the Discord user `" + target_user.name + "#" + target_user.discriminator + "` has been linked.")
+
+                db.connection.close()
                 return
 
             await self.__react__(message, -1)
