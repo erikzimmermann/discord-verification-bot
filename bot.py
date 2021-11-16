@@ -10,22 +10,8 @@ from system import explanation, database, promotion, spigotmc, discord_utils, ad
 
 config: dict = json.load(open("config.json"))
 
-forum_credentials = spigotmc.Credentials(
-    config["spigot_mc"]["user_name"],
-    config["spigot_mc"]["password"],
-    config["spigot_mc"]["two_factor_secret"],
-    config["spigot_mc"]["resource"],
-    config["spigot_mc"]["conversation"]["title"],
-    config["spigot_mc"]["conversation"]["content"],
-    config["google_chrome_location"]
-)
-database_credentials = database.Credentials(
-    database=config["database"]["database"],
-    user=config["database"]["user"],
-    password=config["database"]["password"],
-    host=config["database"]["host"],
-    port=config["database"]["port"]
-)
+forum_credentials = spigotmc.Credentials(config["google_chrome_location"], config=config["spigot_mc"])
+database_credentials = database.Credentials(config=config["database"])
 
 logging.basicConfig(filename="log.txt",
                     filemode='a',
@@ -40,7 +26,7 @@ client = discord.Client(intents=intents)
 discord_variables = discord_utils.Discord(client, config)
 admin_channel = admin.Channel(client, discord_variables, database_credentials, config)
 
-explanation_message: explanation.Message = explanation.Message(client, config["discord"]["promote_channel"], config["messages"]["explanation"])
+explanation_message = explanation.Message(client, config["discord"]["promote_channel"], config["messages"]["explanation"])
 
 
 def start() -> None:

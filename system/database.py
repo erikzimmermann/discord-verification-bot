@@ -5,16 +5,16 @@ import mysql.connector
 
 
 class Credentials:
-    def __init__(self, user: str = "root", database: str = "discord", password: str = "", host: str = "localhost", port: int = 3306):
-        self.host = host
-        self.port = port
-        self.user = user
-        self.password = password
-        self.database = database
+    def __init__(self, **config):
+        self.database = config["database"],
+        self.user = config["user"],
+        self.password = config["password"],
+        self.host = config["host"],
+        self.port = config["port"]
 
 
 class Database:
-    def __init__(self, credentials: Credentials = Credentials()):
+    def __init__(self, credentials: Credentials):
         # connect
         self.connection = mysql.connector.connect(
             host=credentials.host,
