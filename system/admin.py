@@ -2,8 +2,7 @@ import asyncio
 
 import discord
 
-import database
-import discord_utils
+from system import database, discord_utils
 
 
 def cut(s: str, index: int) -> str:

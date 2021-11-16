@@ -5,8 +5,7 @@ import threading
 
 import discord
 
-import database
-import spigotmc
+from system import database, spigotmc
 from typing import Callable, Optional
 
 color_error = 0xfa5858
