@@ -6,12 +6,7 @@ from typing import Callable
 
 import discord
 
-import admin
-import database
-import discord_utils
-import explanation
-import promotion
-import spigotmc
+from system import explanation, database, promotion, spigotmc, discord_utils, admin
 
 config: dict = json.load(open("config.json"))
 
