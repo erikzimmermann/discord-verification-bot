@@ -19,6 +19,7 @@ logging.basicConfig(filename="log.txt",
                     datefmt='%H:%M:%S',
                     level=logging.INFO)
 
+# Enable caching all members
 intents = discord.Intents.default()
 intents.members = True
 
