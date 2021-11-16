@@ -2,8 +2,8 @@ import asyncio
 
 import discord
 
-import bot
 import database
+import discord_utils
 
 
 def cut(s: str, index: int) -> str:
@@ -14,7 +14,7 @@ def cut(s: str, index: int) -> str:
 
 
 class Channel:
-    def __init__(self, client: discord.Client, discord_variables: bot.Discord, database_credentials: database.Credentials, config: dict):
+    def __init__(self, client: discord.Client, discord_variables: discord_utils.Discord, database_credentials: database.Credentials, config: dict):
         self.client = client
         self.discord_variables = discord_variables
         self.database_credentials = database_credentials

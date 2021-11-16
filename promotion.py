@@ -5,7 +5,6 @@ import threading
 
 import discord
 
-import bot
 import database
 import spigotmc
 from typing import Callable, Optional
@@ -85,7 +84,7 @@ class Message:
 
 class Process:
     def __init__(self, client: discord.Client, message: discord.Message, run_later: Optional[Callable], run_after_browsing: Callable, premium_role: discord.Role,
-                 forum_credentials: bot.forum_credentials, database_credentials: bot.database_credentials, loading_emoji: str, logger: logging, has_premium: bool = False):
+                 forum_credentials: spigotmc.Credentials, database_credentials: database.Credentials, loading_emoji: str, logger: logging, has_premium: bool = False):
         self.client = client
         self.message = Message(message, has_premium, loading_emoji, run_later)
         self.run_after_browsing = run_after_browsing

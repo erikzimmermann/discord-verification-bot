@@ -2,41 +2,18 @@ import asyncio
 import json
 import logging
 import threading
+from typing import Callable
 
 import discord
 
+import admin
 import database
+import discord_utils
 import explanation
 import promotion
 import spigotmc
-import admin
-from typing import Callable, Optional
 
 config: dict = json.load(open("config.json"))
-
-
-class Discord:
-    def __init__(self):
-        self.guild = None
-        self.premium_role: Optional[discord.Role] = None
-        self.admin_channel: Optional[discord.TextChannel] = None
-        self.stopping: bool = False
-        self.promotions: dict = {}
-        self.working_queue: list = []
-
-    async def fetch(self) -> None:
-        self.guild = await client.fetch_guild(config["discord"]["guild_id"])
-        self.premium_role = await self.__fetch_role__()
-        self.admin_channel = await client.fetch_channel(config["discord"]["admin_channel"])
-
-    # Fetches the premium role with the premium_id from the config.json.
-    async def __fetch_role__(self) -> Optional[discord.Role]:
-        roles = await self.guild.fetch_roles()
-        for role in roles:
-            if role.id == config["discord"]["premium_role"]:
-                return role
-        return None
-
 
 forum_credentials = spigotmc.Credentials(
     config["spigot_mc"]["user_name"],
@@ -64,9 +41,9 @@ logging.basicConfig(filename="log.txt",
 intents = discord.Intents.default()
 intents.members = True
 
-client: discord.Client = discord.Client(intents=intents)
-discord_variables: Discord = Discord()
-admin_channel: admin.Channel = admin.Channel(client, discord_variables, database_credentials, config)
+client = discord.Client(intents=intents)
+discord_variables = discord_utils.Discord(client, config)
+admin_channel = admin.Channel(client, discord_variables, database_credentials, config)
 
 explanation_message: explanation.Message = explanation.Message(client, config["discord"]["promote_channel"], config["messages"]["explanation"])
 
