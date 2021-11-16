@@ -1,11 +1,14 @@
 import asyncio
+import logging
 import random
 import threading
 
 import discord
 
+import bot
 import database
 import spigotmc
+from typing import Callable, Optional
 
 color_error = 0xfa5858
 color_processing = 0x12a498
@@ -13,7 +16,7 @@ color_success = 0xdaa520
 
 
 class Message:
-    def __init__(self, message, has_premium, loading_emoji, run_later=None):
+    def __init__(self, message: discord.Message, has_premium: bool, loading_emoji: str, run_later: Optional[Callable] = None):
         self.user = message.author
         self.spigot_user = message.content
         self.channel = message.channel
@@ -81,7 +84,8 @@ class Message:
 
 
 class Process:
-    def __init__(self, client, message, run_later, run_after_browsing, premium_role, forum_credentials, database_credentials, loading_emoji, logger, has_premium=False):
+    def __init__(self, client: discord.Client, message: discord.Message, run_later: Optional[Callable], run_after_browsing: Callable, premium_role: discord.Role,
+                 forum_credentials: bot.forum_credentials, database_credentials: bot.database_credentials, loading_emoji: str, logger: logging, has_premium: bool = False):
         self.client = client
         self.message = Message(message, has_premium, loading_emoji, run_later)
         self.run_after_browsing = run_after_browsing
@@ -110,7 +114,7 @@ class Process:
             # Run check in another thread to avoid blocking the main thread
             threading.Thread(target=asyncio.run, args=(self.__check_premium__(),)).start()
 
-    async def incoming_message(self, message):
+    async def incoming_message(self, message: discord.Message):
         if self.message.code_received:
             if message.content == str(self.code):
                 self.database.link(self.spigot, self.user)

@@ -1,8 +1,9 @@
+import discord
 import mysql.connector
 
 
 class Credentials:
-    def __init__(self, user="root", database="discord", password="", host="localhost", port=3306):
+    def __init__(self, user: str = "root", database: str = "discord", password: str = "", host: str = "localhost", port: int = 3306):
         self.host = host
         self.port = port
         self.user = user
@@ -11,7 +12,7 @@ class Credentials:
 
 
 class Database:
-    def __init__(self, credentials=Credentials()):
+    def __init__(self, credentials: Credentials = Credentials()):
         # connect
         self.connection = mysql.connector.connect(
             host=credentials.host,
@@ -35,7 +36,7 @@ class Database:
                        "UNIQUE (discord_id)"
                        ");")
 
-    def get_linked_discord_user_id(self, spigot_name):
+    def get_linked_discord_user_id(self, spigot_name: str):
         cursor = self.connection.cursor(prepared=True)
         cursor.execute("SELECT discord_id FROM `spigot-verification` WHERE spigot = %s LIMIT 1;", [spigot_name])
         result = cursor.fetchall()
@@ -45,20 +46,20 @@ class Database:
         else:
             return result[0][0]
 
-    def is_spigot_name_linked(self, spigot_name):
+    def is_spigot_name_linked(self, spigot_name: str):
         cursor = self.connection.cursor(prepared=True)
         cursor.execute("SELECT COUNT(spigot) FROM `spigot-verification` WHERE spigot = %s LIMIT 1;", [spigot_name])
         result = cursor.fetchall()
         return result[0][0] > 0
 
-    def is_discord_user_linked(self, discord_user_id):
+    def is_discord_user_linked(self, discord_user_id: int):
         cursor = self.connection.cursor(prepared=True)
         cursor.execute("SELECT COUNT(discord_id) FROM `spigot-verification` WHERE discord_id = %s LIMIT 1;", [str(discord_user_id)])
         result = cursor.fetchall()
         return result[0][0] > 0
 
     # expiration_time in seconds
-    def fetch_expired_links(self, expiration_time):
+    def fetch_expired_links(self, expiration_time: int):
         cursor = self.connection.cursor(prepared=True)
         cursor.execute("SELECT discord_id FROM `spigot-verification` WHERE linked_at < now() - interval %s second;", [str(expiration_time)])
         result = cursor.fetchall()
@@ -68,7 +69,7 @@ class Database:
         else:
             return result[0]
 
-    def unlink_discord_ids(self, discord_user_ids):
+    def unlink_discord_ids(self, discord_user_ids: list):
         cursor = self.connection.cursor(prepared=True)
 
         # remove last ',' in array
@@ -78,12 +79,12 @@ class Database:
         cursor.execute("DELETE FROM `spigot-verification` WHERE discord_id in %s;", [array])
         self.connection.commit()
 
-    def unlink_spigot_name(self, spigot_name):
+    def unlink_spigot_name(self, spigot_name: str):
         cursor = self.connection.cursor(prepared=True)
         cursor.execute("DELETE FROM `spigot-verification` WHERE spigot = %s;", [spigot_name])
         self.connection.commit()
 
-    def link(self, spigot_name, discord_user):
+    def link(self, spigot_name, discord_user: discord.User):
         cursor = self.connection.cursor(prepared=True)
         cursor.execute("INSERT INTO `spigot-verification`(spigot, discord_name, discord_id) VALUES (%s, %s, %s);",
                        [spigot_name, discord_user.name + "#" + discord_user.discriminator, discord_user.id])

@@ -1,4 +1,8 @@
 import asyncio
+
+import discord
+
+import bot
 import database
 
 
@@ -10,13 +14,13 @@ def cut(s, index):
 
 
 class Channel:
-    def __init__(self, client, discord_variables, database_credentials, config):
+    def __init__(self, client: discord.Client, discord_variables: bot.Discord, database_credentials: database.Credentials, config: dict):
         self.client = client
         self.discord_variables = discord_variables
         self.database_credentials = database_credentials
         self.config = config
 
-    async def __react__(self, message, status):
+    async def __react__(self, message: discord.Message, status: int):
         await message.clear_reactions()
         await asyncio.sleep(.1)
 
@@ -29,7 +33,7 @@ class Channel:
 
         await asyncio.sleep(.5)
 
-    async def incoming_message(self, message):
+    async def incoming_message(self, message: discord.Message):
         command = message.content
         if command.startswith("!v"):
             command = cut(command, 2)
@@ -111,7 +115,7 @@ class Channel:
                         await message.reply("The user id `" + deep + "` could not be found in a list.")
 
                     await self.__react__(message, 0)
-                except:
+                except any:
                     await message.reply("Wrong syntax: `!v cancel <discord_id>`")
                     await self.__react__(message, -1)
 

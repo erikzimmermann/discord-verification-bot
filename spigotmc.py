@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import hmac
+import logging
 import struct
 import time
 
@@ -9,7 +10,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 
 
-def get_hotp_token(secret, intervals_no):
+def get_hotp_token(secret: str, intervals_no: int):
     key = base64.b32decode(secret, True)
     msg = struct.pack(">Q", intervals_no)
     h = hmac.new(key, msg, hashlib.sha1).digest()
@@ -18,12 +19,12 @@ def get_hotp_token(secret, intervals_no):
     return h
 
 
-def get_totp_token(secret):
+def get_totp_token(secret: str):
     return get_hotp_token(secret, intervals_no=int(time.time()) // 30)
 
 
 class Credentials:
-    def __init__(self, user, password, two_factor_secret, resource, title, content, google_chrome_location):
+    def __init__(self, user: str, password: str, two_factor_secret: str, resource: str, title: str, content: str, google_chrome_location: str):
         self.user = user
         self.password = password
         self.two_factor_secret = two_factor_secret
@@ -34,7 +35,7 @@ class Credentials:
 
 
 class ForumAPI:
-    def __init__(self, credentials, chrome_location, logger, debugging=True):
+    def __init__(self, credentials: Credentials, chrome_location: str, logger: logging, debugging: bool = True):
         self.credentials = credentials
         self.debugging = debugging
         self.logger = logger
@@ -45,7 +46,7 @@ class ForumAPI:
 
         self.driver = uc.Chrome(options=options)
 
-    def debug(self, message):
+    def debug(self, message: str):
         if self.debugging:
             self.logger.info("ForumAPI > " + message)
 
@@ -83,7 +84,7 @@ class ForumAPI:
         self.driver.implicitly_wait(10)
         self.logged_in = True
 
-    def is_user_premium(self, user):
+    def is_user_premium(self, user: str):
         self.debug("loading buyers list")
 
         with self.driver:
@@ -110,7 +111,7 @@ class ForumAPI:
         # check if only one member remains --> is premium (assumes a resource with more than 1 purchases)
         return results == 1
 
-    def send_message(self, recipient, title, message):
+    def send_message(self, recipient: str, title: str, message: str):
         self.debug("loading conversation")
 
         with self.driver:

@@ -10,18 +10,19 @@ import explanation
 import promotion
 import spigotmc
 import admin
+from typing import Callable, Optional
 
-config = json.load(open("config.json"))
+config: dict = json.load(open("config.json"))
 
 
 class Discord:
     def __init__(self):
         self.guild = None
-        self.premium_role = None
-        self.admin_channel = None
-        self.stopping = False
-        self.promotions = {}
-        self.working_queue = []
+        self.premium_role: Optional[discord.Role] = None
+        self.admin_channel: Optional[discord.TextChannel] = None
+        self.stopping: bool = False
+        self.promotions: dict = {}
+        self.working_queue: list = []
 
     async def fetch(self):
         self.guild = await client.fetch_guild(config["discord"]["guild_id"])
@@ -63,14 +64,14 @@ logging.basicConfig(filename="log.txt",
 intents = discord.Intents.default()
 intents.members = True
 
-client = discord.Client(intents=intents)
-discord_variables = Discord()
-admin_channel = admin.Channel(client, discord_variables, database_credentials, config)
+client: discord.Client = discord.Client(intents=intents)
+discord_variables: Discord = Discord()
+admin_channel: admin.Channel = admin.Channel(client, discord_variables, database_credentials, config)
 
-explanation_message = explanation.Message(client, config["discord"]["promote_channel"], config["messages"]["explanation"])
+explanation_message: explanation.Message = explanation.Message(client, config["discord"]["promote_channel"], config["messages"]["explanation"])
 
 
-def start():
+def start() -> None:
     # Check for default setting
     if config["discord"]["token"] == "<your token here>":
         logging.log(logging.ERROR, "You have to configure config.json before starting the discord bot!")
@@ -83,14 +84,14 @@ def start():
 
 
 @client.event
-async def on_ready():
+async def on_ready() -> None:
     await explanation_message.on_ready()
     await discord_variables.fetch()
     logging.info("Bot started")  # Panel indication
 
 
 @client.event
-async def on_reaction_add(reaction, user):
+async def on_reaction_add(reaction: discord.Reaction, user: discord.User) -> None:
     if client.user.id == user.id:
         return
 
@@ -100,7 +101,7 @@ async def on_reaction_add(reaction, user):
 
 
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message) -> None:
     if client.user.id == message.author.id:
         return
 
@@ -127,7 +128,7 @@ async def on_message(message):
         await admin_channel.incoming_message(message)
 
 
-async def start_promotion(message):
+async def start_promotion(message: discord.Message) -> None:
     discord_variables.promotions[message.author.id] = promotion.Process(
         client,
         message,
@@ -146,14 +147,14 @@ async def start_promotion(message):
 
 
 # Will be fired when the browser is ready for the next verification.
-async def after_browsing():
+async def after_browsing() -> None:
     discord_variables.working_queue.pop(0)
     if len(discord_variables.working_queue) > 0:
         client.loop.create_task(start_promotion(discord_variables.working_queue[0]))
 
 
 # Will be fired when a verification is entirely completed (either cancelled or succeeded).
-def after_verification(user, channel, success):
+def after_verification(user: discord.User, channel: discord.TextChannel, success: bool) -> None:
     discord_variables.promotions.pop(user.id)
 
     # Ignore ongoing verifications since cancelled verification won't trigger an explanation update
@@ -161,7 +162,7 @@ def after_verification(user, channel, success):
         client.loop.create_task(explanation_message.update_explanation(channel))
 
 
-async def schedule_expiration_task():
+async def schedule_expiration_task() -> None:
     while not discord_variables.stopping:
         # sleep before run --> Avoid sending messages to expired users
         await asyncio.sleep(60)
@@ -177,7 +178,7 @@ async def schedule_expiration_task():
             client.loop.create_task(call_expirations(expired))
 
 
-async def call_expirations(expired_users):
+async def call_expirations(expired_users: list) -> None:
     for user_id in expired_users:
         member = await discord_variables.guild.fetch_member(user_id)
 
@@ -187,12 +188,12 @@ async def call_expirations(expired_users):
             try:
                 # some users may disallow private messages
                 await member.send(config["messages"]["expiration"])
-            except:
+            except any:
                 await discord_variables.admin_channel.send("Could not contact " + member.name + "#" + member.discriminator + " regarding their premium expiration.")
                 pass
 
 
-def find(sequence, condition):
+def find(sequence: list, condition: Callable) -> bool:
     for x in sequence:
         if condition(x):
             return True
