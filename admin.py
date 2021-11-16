@@ -6,7 +6,7 @@ import bot
 import database
 
 
-def cut(s, index):
+def cut(s: str, index: int) -> str:
     s = s[index:]
     while s.startswith(" "):
         s = s[1:]
@@ -20,7 +20,7 @@ class Channel:
         self.database_credentials = database_credentials
         self.config = config
 
-    async def __react__(self, message: discord.Message, status: int):
+    async def __react__(self, message: discord.Message, status: int) -> None:
         await message.clear_reactions()
         await asyncio.sleep(.1)
 
@@ -33,7 +33,7 @@ class Channel:
 
         await asyncio.sleep(.5)
 
-    async def incoming_message(self, message: discord.Message):
+    async def incoming_message(self, message: discord.Message) -> None:
         command = message.content
         if command.startswith("!v"):
             command = cut(command, 2)
@@ -152,7 +152,7 @@ class Channel:
                     await message.reply("The spigot user '" + name_spigot + "' is already linked.")
                     return
 
-                if db.is_discord_user_linked(id_discord):
+                if db.is_discord_user_linked(int(id_discord)):
                     await self.__react__(message, -1)
                     await message.reply("The discord user '" + target_user.name + "#" + target_user.discriminator + "' is already linked.")
                     return

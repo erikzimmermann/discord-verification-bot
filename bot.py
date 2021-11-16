@@ -24,13 +24,13 @@ class Discord:
         self.promotions: dict = {}
         self.working_queue: list = []
 
-    async def fetch(self):
+    async def fetch(self) -> None:
         self.guild = await client.fetch_guild(config["discord"]["guild_id"])
         self.premium_role = await self.__fetch_role__()
         self.admin_channel = await client.fetch_channel(config["discord"]["admin_channel"])
 
     # Fetches the premium role with the premium_id from the config.json.
-    async def __fetch_role__(self):
+    async def __fetch_role__(self) -> Optional[discord.Role]:
         roles = await self.guild.fetch_roles()
         for role in roles:
             if role.id == config["discord"]["premium_role"]:

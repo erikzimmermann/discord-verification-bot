@@ -10,7 +10,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 
 
-def get_hotp_token(secret: str, intervals_no: int):
+def get_hotp_token(secret: str, intervals_no: int) -> hmac.HMAC:
     key = base64.b32decode(secret, True)
     msg = struct.pack(">Q", intervals_no)
     h = hmac.new(key, msg, hashlib.sha1).digest()
@@ -19,7 +19,7 @@ def get_hotp_token(secret: str, intervals_no: int):
     return h
 
 
-def get_totp_token(secret: str):
+def get_totp_token(secret: str) -> hmac.HMAC:
     return get_hotp_token(secret, intervals_no=int(time.time()) // 30)
 
 
@@ -46,11 +46,11 @@ class ForumAPI:
 
         self.driver = uc.Chrome(options=options)
 
-    def debug(self, message: str):
+    def debug(self, message: str) -> None:
         if self.debugging:
             self.logger.info("ForumAPI > " + message)
 
-    def __login__(self):
+    def __login__(self) -> None:
         self.debug("logging in")
 
         input_element_username = self.driver.find_element_by_id("ctrl_pageLogin_login")
@@ -84,7 +84,7 @@ class ForumAPI:
         self.driver.implicitly_wait(10)
         self.logged_in = True
 
-    def is_user_premium(self, user: str):
+    def is_user_premium(self, user: str) -> bool:
         self.debug("loading buyers list")
 
         with self.driver:
@@ -111,7 +111,7 @@ class ForumAPI:
         # check if only one member remains --> is premium (assumes a resource with more than 1 purchases)
         return results == 1
 
-    def send_message(self, recipient: str, title: str, message: str):
+    def send_message(self, recipient: str, title: str, message: str) -> None:
         self.debug("loading conversation")
 
         with self.driver:
@@ -134,5 +134,5 @@ class ForumAPI:
 
         self.driver.implicitly_wait(5)
 
-    def close(self):
+    def close(self) -> None:
         self.driver.close()

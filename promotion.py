@@ -31,7 +31,7 @@ class Message:
         self.done = False
         self.error = False
 
-    async def update(self):
+    async def update(self) -> None:
         if self.response is not None:
             await self.response.delete()
             await asyncio.sleep(.5)
@@ -76,7 +76,7 @@ class Message:
         if color == color_error:
             asyncio.create_task(self.__delete_response__())
 
-    async def __delete_response__(self):
+    async def __delete_response__(self) -> None:
         await asyncio.sleep(10)
         await self.response.delete()
         if self.run_later is not None:
@@ -98,7 +98,7 @@ class Process:
         self.database = database.Database(database_credentials)
         self.logger = logger
 
-    async def start(self):
+    async def start(self) -> None:
         self.logger.info("Starting " + self.user.name + "'s promotion")
         await self.message.update()
 
@@ -114,24 +114,24 @@ class Process:
             # Run check in another thread to avoid blocking the main thread
             threading.Thread(target=asyncio.run, args=(self.__check_premium__(),)).start()
 
-    async def incoming_message(self, message: discord.Message):
+    async def incoming_message(self, message: discord.Message) -> None:
         if self.message.code_received:
             if message.content == str(self.code):
                 self.database.link(self.spigot, self.user)
                 await self.__apply_premium__()
 
-    def __stop__(self):
+    def __stop__(self) -> None:
         self.database.connection.close()
         self.logger.info(self.user.name + "'s promotion has been finished")
 
-    async def __apply_premium__(self):
+    async def __apply_premium__(self) -> None:
         await self.user.add_roles(self.premium_role)
 
         self.message.done = True
         await self.message.update()
         self.__stop__()
 
-    async def __check_premium__(self):
+    async def __check_premium__(self) -> None:
         forum = spigotmc.ForumAPI(self.forum_credentials, self.forum_credentials.google_chrome_location, self.logger)
         forum.debug("start " + self.spigot + "'s verification")
 
@@ -154,7 +154,7 @@ class Process:
         # go back to main thread
         await self.__complete_browsing__()
 
-    async def __complete_browsing__(self):
+    async def __complete_browsing__(self) -> None:
         self.client.loop.create_task(self.message.update())
 
         # add bigger delay to avoid SpigotMC's message cooldown
