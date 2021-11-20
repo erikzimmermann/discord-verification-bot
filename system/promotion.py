@@ -2,11 +2,11 @@ import asyncio
 import logging
 import random
 import threading
+from typing import Callable, Optional
 
 import discord
 
 from system import database, spigotmc
-from typing import Callable, Optional
 
 color_error = 0xfa5858
 color_processing = 0x12a498

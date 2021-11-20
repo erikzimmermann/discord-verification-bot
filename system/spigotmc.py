@@ -71,12 +71,15 @@ class ForumAPI:
         # search for element before getting the code
         input_element_totp = self.driver.find_element_by_id("ctrl_totp_code")
 
+        ActionChains(self.driver) \
+            .move_to_element(input_element_totp) \
+            .click(input_element_totp) \
+            .perform()
+
         tfa_factor = str(get_totp_token(self.credentials.two_factor_secret))
         self.debug("entering two-factor-authentication-code: " + tfa_factor)
 
         ActionChains(self.driver) \
-            .move_to_element(input_element_totp) \
-            .click(input_element_totp) \
             .send_keys(tfa_factor) \
             .send_keys(Keys.ENTER) \
             .perform()
