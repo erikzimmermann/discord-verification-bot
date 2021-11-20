@@ -24,15 +24,14 @@ def get_totp_token(secret: str) -> hmac.HMAC:
 
 
 class Credentials:
-    def __init__(self, google_chrome_location: str, **config):
+    def __init__(self, user: str, password: str, two_factor_secret: str, resource: str, title: str, content: str, google_chrome_location: str):
+        self.user = user
+        self.password = password
+        self.two_factor_secret = two_factor_secret
+        self.resource = resource
+        self.title = title
+        self.content = content
         self.google_chrome_location = google_chrome_location
-        
-        self.user = config["user_name"]
-        self.password = config["password"]
-        self.two_factor_secret = config["two_factor_secret"]
-        self.resource = config["resource"]
-        self.title = config["conversation"]["title"]
-        self.content = config["conversation"]["content"]
 
 
 class ForumAPI:
