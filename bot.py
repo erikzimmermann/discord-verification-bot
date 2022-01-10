@@ -182,7 +182,7 @@ def find(sequence: list, condition: Callable) -> bool:
     return False
 
 
-def add_missing_links():
+async def add_missing_links():
     # manual use
     print("Add missing links")
 
