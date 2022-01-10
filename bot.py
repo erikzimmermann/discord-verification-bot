@@ -157,6 +157,7 @@ async def call_expirations(expired_users: list) -> None:
 
         if member is not None:
             await member.remove_roles(discord_variables.premium_role)
+            await discord_variables.admin_channel.send("Premium role of " + member.name + "#" + member.discriminator + " has expired. Access removed.")
 
             try:
                 # some users may disallow private messages

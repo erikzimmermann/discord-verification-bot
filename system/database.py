@@ -69,16 +69,28 @@ class Database:
         if len(result) == 0:
             return None
         else:
-            return result[0]
+            # [('xxx',), ('xxx',), ('xxx',)]
+            values = []
+            for entry in result:
+                values.append(entry[0])
+
+            # ['xxx', 'xxx', 'xxx']
+            return values
 
     def unlink_discord_ids(self, discord_user_ids: list) -> None:
+        # ['xxx', 'xxx', 'xxx']
+
+        length = len(discord_user_ids)
+        if length == 0:
+            return
+
         cursor = self.connection.cursor(prepared=True)
 
-        # remove last ',' in array
-        array = str(discord_user_ids)
-        array = array[0:len(array) - 2] + ")"
-
-        cursor.execute("DELETE FROM `spigot-verification` WHERE discord_id in %s;", [array])
+        if length == 1:
+            cursor.execute("DELETE FROM `spigot-verification` WHERE discord_id = %s;", [discord_user_ids[0]])
+        else:
+            placeholders = ",".join(["%s"] * len(discord_user_ids))
+            cursor.execute("DELETE FROM `spigot-verification` WHERE discord_id in (" + placeholders + ");", discord_user_ids)
         self.connection.commit()
 
     def unlink_spigot_name(self, spigot_name: str) -> None:

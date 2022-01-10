@@ -7,6 +7,7 @@ import time
 
 import undetected_chromedriver.v2 as uc
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 
@@ -53,7 +54,7 @@ class ForumAPI:
     def __login__(self) -> None:
         self.debug("logging in")
 
-        input_element_username = self.driver.find_element_by_id("ctrl_pageLogin_login")
+        input_element_username = self.driver.find_element(by=By.ID, value="ctrl_pageLogin_login")
         ActionChains(self.driver) \
             .move_to_element(input_element_username) \
             .click(input_element_username) \
@@ -69,7 +70,7 @@ class ForumAPI:
         self.driver.implicitly_wait(10)
 
         # search for element before getting the code
-        input_element_totp = self.driver.find_element_by_id("ctrl_totp_code")
+        input_element_totp = self.driver.find_element(by=By.ID, value="ctrl_totp_code")
 
         ActionChains(self.driver) \
             .move_to_element(input_element_totp) \
@@ -99,7 +100,7 @@ class ForumAPI:
             self.__login__()
 
         self.debug("finding user: " + user)
-        input_element_search = self.driver.find_element_by_name("username")
+        input_element_search = self.driver.find_element(by=By.NAME, value="username")
         ActionChains(self.driver) \
             .move_to_element(input_element_search) \
             .click(input_element_search) \
@@ -109,7 +110,7 @@ class ForumAPI:
 
         self.driver.implicitly_wait(10)
 
-        results = len(self.driver.find_elements_by_class_name("memberListItem"))
+        results = len(self.driver.find_elements(by=By.CLASS_NAME, value="memberListItem"))
 
         # check if only one member remains --> is premium (assumes a resource with more than 1 purchases)
         return results == 1
@@ -125,7 +126,7 @@ class ForumAPI:
 
         self.debug("sending message " + message)
 
-        input_element_change_to_plain = self.driver.find_element_by_css_selector(".redactor_btn_group.redactor_btn_right > ul > li > a")
+        input_element_change_to_plain = self.driver.find_element(by=By.CSS_SELECTOR, value=".redactor_btn_group.redactor_btn_right > ul > li > a")
         ActionChains(self.driver) \
             .move_to_element(input_element_change_to_plain) \
             .click(input_element_change_to_plain) \
