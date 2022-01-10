@@ -8,7 +8,7 @@ class Discord:
         self.config = config
         self.client = client
 
-        self.guild = None
+        self.guild: Optional[discord.Guild] = None
         self.premium_role: Optional[discord.Role] = None
         self.admin_channel: Optional[discord.TextChannel] = None
         self.stopping: bool = False

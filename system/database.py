@@ -98,8 +98,14 @@ class Database:
         cursor.execute("DELETE FROM `spigot-verification` WHERE spigot = %s;", [spigot_name])
         self.connection.commit()
 
-    def link(self, spigot_name, discord_user: discord.User) -> None:
+    def link(self, spigot_name: str, discord_user: discord.User) -> None:
         cursor = self.connection.cursor(prepared=True)
         cursor.execute("INSERT INTO `spigot-verification`(spigot, discord_name, discord_id) VALUES (%s, %s, %s);",
                        [spigot_name, discord_user.name + "#" + discord_user.discriminator, discord_user.id])
+        self.connection.commit()
+
+    def aged_link(self, spigot_name: str, discord_user: discord.User, age: int) -> None:
+        cursor = self.connection.cursor(prepared=True)
+        cursor.execute("INSERT INTO `spigot-verification` VALUES (%s, %s, %s, now() - interval %s second);",
+                       [spigot_name, discord_user.name + "#" + discord_user.discriminator, discord_user.id, age])
         self.connection.commit()

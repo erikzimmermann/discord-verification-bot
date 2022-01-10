@@ -151,20 +151,28 @@ async def schedule_expiration_task() -> None:
             client.loop.create_task(call_expirations(expired))
 
 
-async def call_expirations(expired_users: list) -> None:
+async def call_expirations(expired_users: list[str]) -> None:
     for user_id in expired_users:
-        member = await discord_variables.guild.fetch_member(user_id)
+        if user_id.isdigit():
+            member = await discord_variables.guild.fetch_member(int(user_id))
 
-        if member is not None:
-            await member.remove_roles(discord_variables.premium_role)
-            await discord_variables.admin_channel.send("Premium role of " + member.name + "#" + member.discriminator + " has expired. Access removed.")
+            if member is not None:
+                await member.remove_roles(discord_variables.premium_role)
+                await admin_log("Premium role of `" + member.name + "#" + member.discriminator + "` has expired. Access removed.")
 
-            try:
-                # some users may disallow private messages
-                await member.send(config["messages"]["expiration"])
-            except any:
-                await discord_variables.admin_channel.send("Could not contact " + member.name + "#" + member.discriminator + " regarding their premium expiration.")
-                pass
+                try:
+                    # some users may disallow private messages
+                    await member.send(config["messages"]["expiration"])
+                except any:
+                    await admin_log("Could not contact `" + member.name + "#" + member.discriminator + "` regarding their premium expiration.")
+                    pass
+        else:
+            await admin_log("Could not find user with id `%s`".format(user_id))
+
+
+async def admin_log(message: str):
+    await discord_variables.admin_channel.send(message)
+    logging.info(message)
 
 
 def find(sequence: list, condition: Callable) -> bool:
@@ -172,6 +180,29 @@ def find(sequence: list, condition: Callable) -> bool:
         if condition(x):
             return True
     return False
+
+
+def add_missing_links():
+    # manual use
+    print("Add missing links")
+
+    db = database.Database(database_credentials)
+    spigot_temp_id = 0
+    async for member in discord_variables.guild.fetch_members():
+        m: discord.Member = member
+        count = m.roles.count(discord_variables.premium_role)
+
+        if count > 0:
+            if db.is_discord_user_linked(m.id):
+                print(m.display_name + " is a premium user and linked")
+            else:
+                print(m.display_name + " is a premium user and NOT linked")
+                db.aged_link("temp-" + str(spigot_temp_id), member, 12960000)
+                print("                              added to db:", "temp-" + str(spigot_temp_id), member.display_name, 12960000)
+                spigot_temp_id = spigot_temp_id + 1
+
+    db.connection.close()
+    print("done")
 
 
 # initialize bot
