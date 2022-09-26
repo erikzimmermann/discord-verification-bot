@@ -3,4 +3,4 @@ __pycache__
 venv
 chromedriver.exe
 log.txt
-*.csv
+*.CSV
