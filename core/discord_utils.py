@@ -45,8 +45,14 @@ class Discord:
 
         self.ready = True
 
-    def is_ready(self):
-        return self.ready
+    def is_ready(self) -> bool:
+        return self.ready and self.all_roles_present()
+
+    def all_roles_present(self) -> bool:
+        for rid in self.config.resource_ids():
+            if not self.get_role(rid):
+                return False
+        return True
 
     async def __fetch_roles__(self) -> Tuple[dict[str, nextcord.Role], nextcord.Role]:
         roles = dict()

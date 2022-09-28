@@ -381,7 +381,7 @@ class Promote(Cog):
 
         for rid in rids:
             role = self.discord.get_role(rid)
-            if role not in member.roles:
+            if role and role not in member.roles:
                 log.info(f"Adding role '{role.name}' to '{member}' ({member.id}) due to a verified purchase ({rid}).")
                 await member.add_roles(role, reason=f"Role added by verified purchase ({rid}).")
                 updated = True
