@@ -271,7 +271,7 @@ class Promote(Cog):
                 user,
                 content=f"Someone else has linked another Discord account to this SpigotMC name in the meantime. 😕"
             )
-            return
+            return False
 
         if key is None:
             await self.update_interaction(
