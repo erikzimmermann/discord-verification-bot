@@ -108,7 +108,6 @@ class Promote(Cog):
     @nextcord.slash_command(
         name="unlink",
         description="Unlinks a Discord account from a SpigotMC account and removes their premium roles.",
-        guild_ids=[932268427333210142],
         default_member_permissions=nextcord.Permissions(administrator=True),
         dm_permission=False
     )
@@ -152,7 +151,6 @@ class Promote(Cog):
     @nextcord.slash_command(
         name="invalidate_ongoing_promotion",
         description="Invalidates the currently ongoing promotion process of a Discord user.",
-        guild_ids=[932268427333210142],
         default_member_permissions=nextcord.Permissions(administrator=True),
         dm_permission=False
     )
@@ -194,7 +192,6 @@ class Promote(Cog):
     @nextcord.slash_command(
         name="promotion_message",
         description="Posts the promotion message including 'start' button.",
-        guild_ids=[932268427333210142],
         default_member_permissions=nextcord.Permissions(administrator=True),
         dm_permission=False
     )
