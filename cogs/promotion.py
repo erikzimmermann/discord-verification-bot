@@ -17,16 +17,11 @@ class Promote(Cog):
 
         self.db = database.Database(self.config)
         self.mail_service = mail.MailService(self.config.email_service())
-
         self.paypal = paypalapi.ApiReader(
             self.db,
             self.config.paypal().client_id(),
             self.config.paypal().secret()
         )
-
-        self.sent_codes = {}
-        self.sent_messages = {}
-
         self.discord = discord_utils.Discord(bot, self.config.discord())
 
         self.email_html = files.read_file("email.html")
@@ -35,6 +30,10 @@ class Promote(Cog):
             log.error("Cannot find a valid 'email.html' file in the root directory. Please check!")
         if not self.email_plain:
             log.error("Cannot find a valid 'email.plain' file in the root directory. Please check!")
+
+        self.sent_codes = {}
+        self.sent_messages = {}
+        self.last_paypal_update = datetime.now()
 
     def all_services_ready(self):
         return self.db.has_valid_con() \
@@ -230,7 +229,10 @@ class Promote(Cog):
                 content=f"This SpigotMC account is already linked to a Discord account. 😕", ephemeral=True)
             return
 
-        self.paypal.update_transaction_data()  # update transactions before trying to find a match
+        # update transactions before trying to find a match
+        if (datetime.now() - self.last_paypal_update).seconds >= magic.PAYPAL_UPDATE_DELAY:
+            self.paypal.update_transaction_data()
+
         email = self.db.get_email(spigot_name)
 
         if email is not None:
