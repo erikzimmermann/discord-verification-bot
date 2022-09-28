@@ -140,12 +140,13 @@ class Database:
             result = cursor.fetchone()
             return result is not None
 
-    def is_spigot_name_linked(self, spigot_name: str) -> bool:
+    def is_spigot_name_linked(self, spigot_name: str, do_hash: bool = True) -> bool:
         with self.con.cursor(prepared=True) as cursor:
-            encoded_spigot_name = encode(spigot_name)
+            if do_hash:
+                spigot_name = encode(spigot_name)
 
             cursor.execute("SELECT `discord_id` FROM `user_links` WHERE `spigot_name` LIKE %s LIMIT 1;",
-                           [encoded_spigot_name])
+                           [spigot_name])
             result = cursor.fetchone()
             return result is not None
 

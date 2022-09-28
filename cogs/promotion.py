@@ -266,6 +266,13 @@ class Promote(Cog):
     async def code_validation_check(self, user: nextcord.Member) -> bool:
         key, encoded_spigot_name, valid = self.get_cached_promotion_key(user, invalidate=False)
 
+        if self.db.is_spigot_name_linked(encoded_spigot_name, do_hash=False):
+            await self.update_interaction(
+                user,
+                content=f"Someone else has linked another Discord account to this SpigotMC name in the meantime. 😕"
+            )
+            return
+
         if key is None:
             await self.update_interaction(
                 user,
@@ -286,6 +293,13 @@ class Promote(Cog):
     async def verify_code(self, user: nextcord.Member,
                           code_input: int) -> None:
         key, encoded_spigot_name, valid = self.get_cached_promotion_key(user)
+
+        if self.db.is_spigot_name_linked(encoded_spigot_name, do_hash=False):
+            await self.update_interaction(
+                user,
+                content=f"Someone else has linked another Discord account to this SpigotMC name in the meantime. 😕"
+            )
+            return
 
         # check validation before key since the dialogue for giving the bot the 6-digit code is already open
         if encoded_spigot_name is not None and not valid:
