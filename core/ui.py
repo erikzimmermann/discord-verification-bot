@@ -1,7 +1,6 @@
 from typing import Callable, Coroutine, Any, Optional
 
 import nextcord.ui
-from nextcord import Interaction
 from nextcord.ui import View, Modal, TextInput
 
 
@@ -15,7 +14,7 @@ class StartPromotionButton(View):
 
 
 class SpigotNameInput(Modal):
-    def __init__(self, callback: Callable[[Interaction, str], Coroutine[Any, Any, None]]):
+    def __init__(self, callback: Callable[[nextcord.Interaction, str], Coroutine[Any, Any, None]]):
         super(SpigotNameInput, self).__init__(f"Account Promotion")
         self.nested_callback = callback
 
@@ -25,34 +24,27 @@ class SpigotNameInput(Modal):
         )
         self.add_item(self.input)
 
-    async def callback(self, interaction: Interaction):
-        await self.nested_callback(interaction, self.input.value)
+    async def callback(self, interaction: nextcord.Interaction):
+        await self.nested_callback(interaction, self.input.value.strip())
 
 
 class PromotionKeyInputButton(View):
-    def __init__(self, addressed: nextcord.Member,
-                 validation_check: Callable[[nextcord.Member, nextcord.Message], Coroutine[Any, Any, bool]],
-                 callback: Callable[[nextcord.Message, Interaction, int], Coroutine[Any, Any, None]]):
-        super().__init__()
-        self.addressed = addressed
+    def __init__(self, validation_check: Callable[[nextcord.Member], Coroutine[Any, Any, bool]],
+                 callback: Callable[[nextcord.Member, int], Coroutine[Any, Any, None]]):
+        super().__init__(timeout=None, auto_defer=False)
         self.validation_check = validation_check
         self.callback = callback
-        self.message: Optional[nextcord.Message] = None
-
-    def apply_context(self, message: nextcord.Message) -> None:
-        self.message = message
 
     @nextcord.ui.button(label="Verify code", style=nextcord.ButtonStyle.success, custom_id="verify_code")
     async def enter_promotion_key(self, button: nextcord.Button, interaction: nextcord.Interaction) -> None:
-        if await self.validation_check(interaction.user, self.message):
-            await interaction.response.send_modal(PromotionKeyInput(self.message, self.callback))
+        if await self.validation_check(interaction.user):
+            await interaction.response.send_modal(PromotionKeyInput(self.callback))
 
 
 class PromotionKeyInput(Modal):
-    def __init__(self, trigger: nextcord.Message,
-                 callback: Callable[[nextcord.Message, Interaction, int], Coroutine[Any, Any, None]]):
+    def __init__(self, callback: Callable[
+                     [nextcord.Member, int], Coroutine[Any, Any, None]]):
         super(PromotionKeyInput, self).__init__(f"Account Promotion")
-        self.trigger = trigger
         self.nested_callback = callback
 
         self.input = TextInput(
@@ -61,10 +53,10 @@ class PromotionKeyInput(Modal):
         )
         self.add_item(self.input)
 
-    async def callback(self, interaction: Interaction):
+    async def callback(self, interaction: nextcord.Interaction):
         value = self.input.value
 
         if value.isnumeric():
-            await self.nested_callback(self.trigger, interaction, int(value))
+            await self.nested_callback(interaction.user, int(value))
         else:
-            await self.nested_callback(self.trigger, interaction, 0)
+            await self.nested_callback(interaction.user, 0)

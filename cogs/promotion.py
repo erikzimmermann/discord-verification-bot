@@ -25,6 +25,7 @@ class Promote(Cog):
         )
 
         self.sent_codes = {}
+        self.sent_messages = {}
 
         self.discord = discord_utils.Discord(bot, self.config.discord())
 
@@ -89,7 +90,7 @@ class Promote(Cog):
                     await interaction.response.send_message(
                         content=f"An email was already sent. Please check your inbox. 📬", ephemeral=True)
             else:
-                await interaction.response.send_modal(ui.SpigotNameInput(self.start_promotion))
+                await interaction.response.send_modal(ui.SpigotNameInput(self.send_promotion_key))
 
     @tasks.loop(minutes=5)
     async def start_role_updater(self):
@@ -212,7 +213,7 @@ class Promote(Cog):
 
         await channel.send(embed=embed, view=ui.StartPromotionButton())
 
-    async def start_promotion(self, it: nextcord.interactions.Interaction, spigot_name: str):
+    async def send_promotion_key(self, it: nextcord.Interaction, spigot_name: str):
         user: nextcord.Member = it.user
 
         if self.db.is_user_linked(user.id):
@@ -248,14 +249,13 @@ class Promote(Cog):
 
             log.info(f"Starting promotion process for {user}.")
 
-            view = ui.PromotionKeyInputButton(user, self.code_validation_check, self.verify_code)
-            message = await it.response.send_message(
+            self.sent_messages[user.id] = await it.response.send_message(
                 content="We have sent an email to the address that was used to buy one of our plugins. 📬\n\n"
                         "*Use the button below to verify your received promotion key.*",
-                view=view,
+                view=ui.PromotionKeyInputButton(self.code_validation_check, self.verify_code),
                 ephemeral=True
             )
-            view.apply_context(message)
+            # -> ui: key input -> code_validation_check -> verify_code
         else:
             log.info(f"Failed email lookup for {user}.")
             await it.response.send_message(
@@ -263,41 +263,45 @@ class Promote(Cog):
                 ephemeral=True
             )
 
-    async def code_validation_check(self, user: nextcord.Member, original_post: nextcord.Message) -> bool:
+    async def code_validation_check(self, user: nextcord.Member) -> bool:
         key, encoded_spigot_name, valid = self.get_cached_promotion_key(user, invalidate=False)
 
         if key is None:
-            await original_post.edit(
-                content="Please click the *Start Promotion* button to start your promotion.",
-                view=None)
+            await self.update_interaction(
+                user,
+                content="Please click the *Start Promotion* button to start your promotion."
+            )
             return False
 
         if not valid:
-            await original_post.edit(
+            await self.update_interaction(
+                user,
                 content=f"Your promotion key is **older than {self.config.discord().code_expiration_text()}**. ⏰\n"
-                        f"Please restart your promotion.",
-                view=None)
+                        f"Please restart your promotion."
+            )
             return False
 
         return True
 
-    async def verify_code(self, original_post: nextcord.Message, it: nextcord.Interaction, code_input: int) -> None:
-        user: nextcord.Member = it.user
+    async def verify_code(self, user: nextcord.Member,
+                          code_input: int) -> None:
         key, encoded_spigot_name, valid = self.get_cached_promotion_key(user)
 
         # check validation before key since the dialogue for giving the bot the 6-digit code is already open
         if encoded_spigot_name is not None and not valid:
-            await original_post.edit(
+            await self.update_interaction(
+                user,
                 content=f"Your promotion key is **older than {self.config.discord().code_expiration_text()}**. ⏰\n"
-                        f"Please restart your promotion.",
-                view=None)
+                        f"Please restart your promotion."
+            )
             return
 
         # only True if an admin invalidates the process while the user enters the key
         if key is None or encoded_spigot_name is None:
-            await original_post.edit(
-                content="Your promotion has been cancelled. Please try again.",
-                view=None)
+            await self.update_interaction(
+                user,
+                content="Your promotion has been cancelled. Please try again."
+            )
             return
 
         if key == code_input:
@@ -305,14 +309,26 @@ class Promote(Cog):
             await self.update_member(user)
             log.info(f"Promotion process for {user} has been completed.")
 
-            await original_post.edit(
-                content=self.config.discord().promotion_message().format(user=user.mention),
-                view=None)
+            await self.update_interaction(
+                user,
+                content=self.config.discord().promotion_message().format(user=user.mention)
+            )
         else:
             log.info(f"Promotion process for {user} failed.")
-            await original_post.edit(
-                content=f"This promotion key is **not correct**. Please restart your promotion.",
-                view=None)
+
+            await self.update_interaction(
+                user,
+                content=f"This promotion key is **not correct**. Please restart your promotion."
+            )
+
+    async def update_interaction(self, user: nextcord.Member, invalidate: bool = True, content: str = None,
+                                 view: nextcord.ui.View = None) -> None:
+        plm: nextcord.PartialInteractionMessage = self.sent_messages.get(user.id)
+        if plm:
+            await plm.edit(content=content, view=view)
+
+        if invalidate:
+            self.sent_messages.pop(user.id)
 
     async def update_user(self, user_id: int) -> None:
         await self.update_member(await self.discord.get_member(user_id))
