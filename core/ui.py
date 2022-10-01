@@ -1,4 +1,4 @@
-from typing import Callable, Coroutine, Any, Optional
+from typing import Callable, Coroutine, Any
 
 import nextcord.ui
 from nextcord.ui import View, Modal, TextInput

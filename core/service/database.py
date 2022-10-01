@@ -1,19 +1,19 @@
-from typing import Optional
 import hashlib
+from typing import Optional
 
 import mysql.connector.errors
+from cryptography.fernet import Fernet
 from mysql import connector
 from mysql.connector.errors import InterfaceError
-from core import files, log
 
-from cryptography.fernet import Fernet
+from core import files, log
 
 
 def encode(text: str) -> str:
     return hashlib.sha256(text.lower().encode("utf-8")).hexdigest()
 
 
-class Database:
+class MySQL:
     def __init__(self, config: files.Config):
         self.first_paypal_fetch = config.paypal().begin_date()
         self.config = config.database()
@@ -27,7 +27,7 @@ class Database:
 
         self.encryption = Fernet(encryption_key.encode(encoding="utf-8"))
 
-    async def build_connection(self) -> None:
+    def build_connection(self) -> None:
         log.info("Connecting to mysql database...")
 
         password = self.config.password()
