@@ -1,37 +1,38 @@
 {
-  "google_chrome_location": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-  "expiration": 7776000,
   "discord": {
-    "token": "<your token here>",
-    "promote_channel": 0,
-	"admin_channel": 0,
-    "premium_role": 0,
+    "token": "",
+    "code_expiration": 900,
+    "code_expiration_text": "15 minutes",
+    "activity": "Handling promotions (BETA)",
+    "activity_type": -1,
     "guild_id": 0,
-    "loading_emoji": "<:name:id>"
-  },
-  "messages": {
-    "expiration": "Hi there!\nYour premium verification on our **support discord** <:name:id> has ended.\n\nHead to **#promote** to renew it ✨",
-    "explanation": {
-      "title_image_url": "https://i.imgur.com/ZoSmsVs.png",
-      "title": "How to verify",
-      "content": "Just enter your **SpigotMC username** in this chat.\n\nYou will get a verification number via SpigotMC which then have to be confirmed in this channel.\n\n*Promotions must be renewed after 3 months.*"
+    "premium_role": 0,
+    "functional_roles": {},
+    "promotion_message": "Thank you for supporting us and joining premium! \uD83E\uDD73\nYour promotion is now complete.",
+    "promotion_start": {
+      "title": "\ud83d\udc8e Premium Promotion",
+      "content": "If you already purchased one of our plugins and haven't upgraded your Discord account to premium yet, you're definitely looking in the right place! By promoting yourself you **get access to** the following things:\n\n<:dot:1024566211209597009>Fast responding hotfixes\n<:dot:1024566211209597009>Official releases\n<:dot:1024566211209597009>Colored premium rank\n\n**How it works**\nAfter clicking on the button below, you will be asked to enter your SpigotMC user name. The bot then searches for a payment that was registered in combination with your name. If there is a match, an email will be sent to your email address that was used to buy the plugin. The last thing you have to do now is to verify your individual promotion key in your mail. The entire process doesn't take longer than a minute!\n\n**Data Privacy**\nNone of your data will be stored in plaintext to ensure your data privacy. Email addresses will be encrypted with [Fernet](https://cryptography.io/en/latest/fernet/) and SpigotMC names will be hashed before storing them in the database. If you are interested in checking the code yourself, please go ahead and visit my [GitHub repo](https://github.com/erikzimmermann/discord-verification-bot).\n\n*Abusers can be reported and will be banned from this server!*"
     }
   },
-  "spigot_mc": {
-    "user_name": "<user>",
-    "password": "<password>",
-    "two_factor_secret": "<secret>",
-    "resource": "<resource.id>",
-    "conversation": {
-      "title": "Verification",
-      "content": "{code}"
-    }
+  "email_service": {
+    "email": "mail@address.com",
+    "password": "",
+    "host": "",
+    "port": 465,
+    "subject": "Discord Premium Verification",
+    "sender_name": "Name <mail@address.com>"
+  },
+  "paypal": {
+    "client_id": "",
+    "secret": "",
+    "begin_date": "2021-01-01T00:00:00Z"
   },
   "database": {
     "database": "discord",
     "user": "root",
     "password": "",
     "host": "localhost",
-    "port": 3306
+    "port": 3306,
+    "encryption_key": ""
   }
 }
