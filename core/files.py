@@ -1,7 +1,8 @@
 import json
+import os
 from typing import Optional
 
-import os
+import nextcord
 
 
 def read_file(file: str) -> Optional[str]:
@@ -61,6 +62,12 @@ class Discord(Wrapper):
     def activity_type(self) -> int:
         return int(self.file["activity_type"])
 
+    def get_activity(self) -> Optional[nextcord.Activity]:
+        if self.activity_type() >= 0:
+            return nextcord.Activity(type=self.activity_type(), name=self.activity())
+        else:
+            return None
+
     def premium_role(self) -> int:
         return self.file["premium_role"]
 
@@ -115,7 +122,8 @@ class EmailService(Wrapper):
         return self.file["host"]
 
     def port(self) -> int:
-        return int(self.file["port"])
+        port = self.file["port"]
+        return 0 if port is None else int(port)
 
     def subject(self) -> str:
         return self.file["subject"]

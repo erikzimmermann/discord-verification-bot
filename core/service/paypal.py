@@ -3,7 +3,8 @@ from typing import Optional
 
 import requests
 
-from core import database, log
+from core import log
+from core.service import database
 
 time_format = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -114,7 +115,7 @@ def __get_tax__(transaction: dict) -> Optional[float]:
 
 
 class ApiReader:
-    def __init__(self, db: database.Database, client_id: str, secret: str, url: str = "https://api-m.paypal.com"):
+    def __init__(self, db: database.MySQL, client_id: str, secret: str, url: str = "https://api-m.paypal.com"):
         self.db = db
         self.client_id = client_id
         self.secret = secret
@@ -127,13 +128,20 @@ class ApiReader:
         if self.access_token is None:
             log.error("Could not fetch PayPal access token! Please check your credentials.")
 
-    def update_transaction_data(self, silent: bool = False) -> None:
+    def update_transaction_data(self, silent: bool = False, fetch_buffer: int = 0) -> None:
         if self.access_token is None:
             return
 
+        last_fetch = self.db.get_last_paypal_fetch()
+
+        if fetch_buffer > 0:
+            rel_last_fetch = (datetime.now() - __string_to_time__(last_fetch)).seconds
+            if rel_last_fetch <= fetch_buffer:
+                return
+
         now = __time_to_string__(datetime.now())
         __ensure_date_limit__(
-            self.db.get_last_paypal_fetch(),
+            last_fetch,
             now,
             lambda start, end: self.__save_payments__(start, end, silent=silent)
         )
