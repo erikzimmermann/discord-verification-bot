@@ -47,12 +47,6 @@ class Discord(Wrapper):
     def token(self) -> str:
         return self.file["token"]
 
-    def code_expiration(self) -> int:
-        return int(self.file["code_expiration"])
-
-    def code_expiration_text(self) -> str:
-        return self.file["code_expiration_text"]
-
     def guild_id(self) -> int:
         return int(self.file["guild_id"])
 
@@ -164,12 +158,6 @@ class Database(Wrapper):
 
     def port(self) -> int:
         return int(self.file["port"])
-
-    def encryption_key(self) -> str:
-        return self.file["encryption_key"]
-
-    def set_encryption_key(self, key: str) -> None:
-        self.file["encryption_key"] = key
 
 
 class SpigotMc(Wrapper):

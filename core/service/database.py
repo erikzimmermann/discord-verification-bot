@@ -1,7 +1,6 @@
 from typing import Optional
 
 import mysql.connector.errors
-from cryptography.fernet import Fernet
 from mysql import connector
 from mysql.connector.errors import InterfaceError
 
@@ -13,14 +12,6 @@ class MySQL:
         self.first_paypal_fetch = config.paypal().begin_date()
         self.config = config.database()
         self.con: Optional[mysql.connector.MySQLConnection] = None
-
-        encryption_key = self.config.encryption_key()
-        if encryption_key is None or len(encryption_key) == 0:
-            encryption_key = Fernet.generate_key().decode(encoding="utf-8")
-            self.config.set_encryption_key(encryption_key)
-            config.save()
-
-        self.encryption = Fernet(encryption_key.encode(encoding="utf-8"))
 
     def build_connection(self) -> None:
         log.info("Connecting to mysql database...")
@@ -45,12 +36,6 @@ class MySQL:
 
     def has_valid_con(self):
         return self.con is not None and self.con.is_connected()
-
-    def encrypt(self, text: str) -> str:
-        return self.encryption.encrypt(text.lower().encode("utf-8")).decode()
-
-    def decrypt(self, text: str) -> str:
-        return self.encryption.decrypt(text).decode()
 
     def __create_tables__(self) -> None:
         if self.con is None:
