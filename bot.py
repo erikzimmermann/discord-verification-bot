@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 import nextcord
 from nextcord.ext import commands
@@ -13,7 +14,7 @@ intents = nextcord.Intents.default()
 intents.members = True
 
 bot = commands.Bot(activity=config_discord.get_activity(), intents=intents)
-services = services.Holder(bot, config)
+service_holder: Optional[services.Holder] = None
 
 
 def load_extensions():
@@ -22,12 +23,17 @@ def load_extensions():
             log.info(f"Loading extension: {fn}")
             bot.load_extension(f"cogs.{fn[:-3]}", extras={
                 "config": config,
-                "services": services
+                "services": service_holder
             })
 
 
 def start():
+    global service_holder
     log.load_logging_handlers()
+
+    log.info("Loading services...")
+    service_holder = services.Holder(bot, config)
+    log.info("Loading extensions...")
     load_extensions()
 
     log.info("Starting bot...")
@@ -36,7 +42,7 @@ def start():
 
 @bot.event
 async def on_ready():
-    await services.enable_all()
+    await service_holder.enable_all()
     print("Bot is ready! - @Pterodactyl")
 
 

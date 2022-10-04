@@ -3,7 +3,7 @@ from typing import Optional
 
 import requests
 
-from core import log
+from core import log, magic
 from core.service import database
 
 time_format = "%Y-%m-%dT%H:%M:%SZ"
@@ -55,23 +55,25 @@ def access_dict(d: dict, *args) -> Optional[str]:
         return None
 
 
-def get_data_from_payment(transaction: dict) -> Optional[tuple[int, str, str, str, float, float]]:
+def get_data_from_payment(transaction: dict) -> Optional[tuple[int, str, str, str, str, float, float]]:
     rid = __get_resource_id__(transaction)
     spigot_name = __get_spigot_name__(transaction)
-    email = __get_email__(transaction)
+    transaction_id = __get_transaction_id__(transaction)
+    transaction_info = __get_transaction_info__(transaction)
     bought_at = __get_bought_at__(transaction)
     paid = __get_paid__(transaction)
     tax = __get_tax__(transaction)
 
     if rid is None \
             or spigot_name is None \
-            or email is None \
+            or transaction_id is None \
+            or transaction_info is None \
             or bought_at is None \
             or paid is None \
             or tax is None:
         return None
 
-    return rid, spigot_name, email, bought_at, paid, tax
+    return rid, spigot_name, transaction_id, transaction_info, bought_at, paid, tax
 
 
 def __get_resource_id__(transaction: dict) -> Optional[int]:
@@ -81,6 +83,11 @@ def __get_resource_id__(transaction: dict) -> Optional[int]:
 
     idx = custom_field.rfind("|")
     return int(custom_field[idx + 1:])
+
+
+def __get_transaction_info__(transaction: dict) -> Optional[str]:
+    custom_field = access_dict(transaction, "transaction_info", "custom_field")
+    return custom_field
 
 
 def __get_spigot_name__(transaction: dict) -> Optional[str]:
@@ -96,8 +103,8 @@ def __get_spigot_name__(transaction: dict) -> Optional[str]:
     return item_name[idx + 1:-1]
 
 
-def __get_email__(transaction: dict) -> Optional[str]:
-    return access_dict(transaction, "payer_info", "email_address")
+def __get_transaction_id__(transaction: dict) -> Optional[str]:
+    return access_dict(transaction, "transaction_info", "transaction_id")
 
 
 def __get_bought_at__(transaction: dict) -> Optional[str]:
@@ -128,7 +135,7 @@ class ApiReader:
         if self.access_token is None:
             log.error("Could not fetch PayPal access token! Please check your credentials.")
 
-    def update_transaction_data(self, silent: bool = False, fetch_buffer: int = 0) -> None:
+    def update_transaction_data(self, silent: bool = False, fetch_buffer: int = magic.PAYPAL_UPDATE_DELAY) -> None:
         if self.access_token is None:
             return
 
@@ -153,8 +160,8 @@ class ApiReader:
             if data is None:
                 continue
 
-            rid, spigot_name, email, bought_at, paid, tax = data
-            self.db.add_payment(rid, spigot_name, email, bought_at, paid, tax)
+            rid, spigot_name, transaction_id, transaction_info, bought_at, paid, tax = data
+            self.db.add_payment(rid, spigot_name, bought_at, paid, tax)
 
     def __fetch_transactions__(self, date_start: str, date_end: str, silent: bool = False) -> list[dict]:
         if self.access_token is None:

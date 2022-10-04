@@ -32,7 +32,7 @@ class Control(Cog):
     ):
         user: nextcord.Member = it.user
 
-        target = await self.discord.get_member(int(discord_id))
+        target = await self.discord.fetch_member(int(discord_id))
 
         if target is None:
             await it.response.send_message(

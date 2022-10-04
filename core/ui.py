@@ -1,3 +1,4 @@
+import urllib.parse
 from typing import Callable, Coroutine, Any
 
 import nextcord.ui
@@ -29,34 +30,16 @@ class SpigotNameInput(Modal):
 
 
 class PromotionKeyInputButton(View):
-    def __init__(self, validation_check: Callable[[nextcord.Member], Coroutine[Any, Any, bool]],
-                 callback: Callable[[nextcord.Member, int], Coroutine[Any, Any, None]]):
+    def __init__(self, spigotmc_recipient: str, spigotmc_topic: str):
         super().__init__(timeout=None, auto_defer=False)
-        self.validation_check = validation_check
-        self.callback = callback
 
-    @nextcord.ui.button(label="Verify code", style=nextcord.ButtonStyle.success, custom_id="verify_code")
-    async def enter_promotion_key(self, button: nextcord.Button, interaction: nextcord.Interaction) -> None:
-        if await self.validation_check(interaction.user):
-            await interaction.response.send_modal(PromotionKeyInput(self.callback))
+        spigotmc_recipient = urllib.parse.quote_plus(spigotmc_recipient)
+        spigotmc_topic = urllib.parse.quote_plus(spigotmc_topic)
 
+        url = f"https://www.spigotmc.org/conversations/add?to={spigotmc_recipient}&title={spigotmc_topic}"
 
-class PromotionKeyInput(Modal):
-    def __init__(self, callback: Callable[
-                     [nextcord.Member, int], Coroutine[Any, Any, None]]):
-        super(PromotionKeyInput, self).__init__(f"Account Promotion")
-        self.nested_callback = callback
-
-        self.input = TextInput(
-            label="Please enter the 6-digit promotion key", required=True, min_length=6, max_length=6,
-            style=nextcord.TextInputStyle.short
-        )
-        self.add_item(self.input)
-
-    async def callback(self, interaction: nextcord.Interaction):
-        value = self.input.value
-
-        if value.isnumeric():
-            await self.nested_callback(interaction.user, int(value))
-        else:
-            await self.nested_callback(interaction.user, 0)
+        self.add_item(nextcord.ui.Button(
+            label="Verify",
+            url=url,
+            style=nextcord.ButtonStyle.success
+        ))

@@ -172,6 +172,17 @@ class Database(Wrapper):
         self.file["encryption_key"] = key
 
 
+class SpigotMc(Wrapper):
+    def __init__(self, file: dict):
+        super().__init__(file, "spigotmc")
+
+    def recipient(self) -> str:
+        return self.file["recipient"]
+
+    def topic(self) -> str:
+        return self.file["topic"]
+
+
 class Config(File):
     def __init__(self):
         super(Config, self).__init__("config")
@@ -187,3 +198,6 @@ class Config(File):
         
     def database(self) -> Database:
         return Database(self.file)
+
+    def spigotmc(self) -> SpigotMc:
+        return SpigotMc(self.file)

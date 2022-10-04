@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from nextcord.ext.commands import Bot
 
 from core import files, log

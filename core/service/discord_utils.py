@@ -22,7 +22,6 @@ class Discord:
         self.bot = bot
         self.database = db
 
-        self.guild: Optional[nextcord.Guild] = None
         self.roles: Optional[dict[str, nextcord.Role]] = None
         self.premium_role: Optional[nextcord.Role] = None
         self.ready = False
@@ -30,13 +29,11 @@ class Discord:
     async def fetch(self) -> None:
         log.info("Fetching Discord instances...")
 
-        self.guild = await self.bot.fetch_guild(self.config.guild_id())
-        self.roles, self.premium_role = await self.__fetch_roles__()
-
-        if not self.guild:
+        if not self.get_guild():
             log.error("Could not fetch guild. Please check the discord section in your config!")
             return
 
+        self.roles, self.premium_role = await self.__fetch_roles__()
         if len(self.roles) == 0:
             log.error("Could not fetch functional roles. Please check the discord section in your config!")
             return
@@ -45,16 +42,32 @@ class Discord:
             log.error("Could not fetch premium role. Please check the discord section in your config!")
             return
 
+        if not self.all_roles_present():
+            log.error("Could not fetch every functional role. "
+                      "Please check your discord accordingly to your configurations.")
+            return
+
         self.ready = True
 
+    def get_guild(self) -> nextcord.Guild:
+        return self.bot.get_guild(self.config.guild_id())
+
     def is_ready(self):
-        return self.ready
+        return self.ready and self.all_roles_present()
+
+    def all_roles_present(self) -> bool:
+        for rid in self.config.resource_ids():
+            if not self.get_role(rid):
+                return False
+        return True
 
     async def __fetch_roles__(self) -> Tuple[dict[str, nextcord.Role], nextcord.Role]:
         roles = dict()
         premium_role = None
 
-        fetched = await self.guild.fetch_roles()
+        guild = self.get_guild()
+        fetched = await guild.fetch_roles()
+
         for role in fetched:
             if role.id == self.config.premium_role():
                 premium_role = role
@@ -67,29 +80,35 @@ class Discord:
     def get_role(self, rid: int) -> Optional[nextcord.Role]:
         return self.roles.get(str(rid))
 
-    async def get_member(self, user_id: int) -> nextcord.Member:
-        return await self.guild.fetch_member(user_id)
+    async def fetch_member(self, user_id: int) -> nextcord.Member:
+        return await self.get_guild().fetch_member(user_id)
 
-    async def get_bot_member(self) -> nextcord.Member:
-        return await self.get_member(self.bot.user.id)
+    async def fetch_bot_member(self) -> nextcord.Member:
+        return await self.fetch_member(self.bot.user.id)
 
-    async def get_all_members(self, consumer: Callable[[nextcord.Member], Coroutine[Any, Any, None]],
-                              only_lower_ranked: bool = True, no_bot: bool = True) -> None:
-        bot_member = await self.get_bot_member()
+    async def update_members(self) -> int:
+        changed = 0
 
-        async for member in self.guild.fetch_members():
-            if no_bot and member.bot:
-                continue
+        roles, premium_role = await self.__fetch_roles__()
+        members = []
 
-            if only_lower_ranked:
-                comparison = compare_rank(member, bot_member)
-                if comparison > 0:
-                    await consumer(member)
-            else:
-                await consumer(member)
-    
+        for role in roles.values():
+            for m in role.members:
+                if m not in members:
+                    members.append(m)
+
+        for m in premium_role.members:
+            if m not in members:
+                members.append(m)
+
+        for m in members:
+            if await self.update_member(m):
+                changed += 1
+
+        return changed
+
     async def update_user(self, user_id: int) -> None:
-        await self.update_member(await self.get_member(user_id))
+        await self.update_member(await self.fetch_member(user_id))
 
     async def update_member(self, member: nextcord.Member) -> bool:
         rids = self.database.get_bought_rids(member.id)
@@ -123,7 +142,7 @@ class Discord:
 
         for rid in rids:
             role = self.get_role(rid)
-            if role not in member.roles:
+            if role and role not in member.roles:
                 log.info(f"Adding role '{role.name}' to '{member}' ({member.id}) due to a verified purchase ({rid}).")
                 await member.add_roles(role, reason=f"Role added by verified purchase ({rid}).")
                 updated = True

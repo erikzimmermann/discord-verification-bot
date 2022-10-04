@@ -1,4 +1,3 @@
-import hashlib
 from typing import Optional
 
 import mysql.connector.errors
@@ -6,11 +5,7 @@ from cryptography.fernet import Fernet
 from mysql import connector
 from mysql.connector.errors import InterfaceError
 
-from core import files, log
-
-
-def encode(text: str) -> str:
-    return hashlib.sha256(text.lower().encode("utf-8")).hexdigest()
+from core import files, log, magic
 
 
 class MySQL:
@@ -65,8 +60,7 @@ class MySQL:
             cursor.execute("CREATE TABLE IF NOT EXISTS `user_payments` ("
                            "resource MEDIUMINT(6) NOT NULL,"
                            "spigot_name VARCHAR(64) NOT NULL,"
-                           "email VARCHAR(120) NOT NULL,"
-                           "bought timestamp NOT NULL,"
+                           "bought_at timestamp NOT NULL,"
                            "paid FLOAT(6, 2) NOT NULL,"
                            "tax FLOAT(6,2) NOT NULL,"
                            "PRIMARY KEY (resource, spigot_name),"
@@ -106,32 +100,15 @@ class MySQL:
             result = cursor.fetchone()
             return default if result is None else result[0]
 
-    def add_payment(self, resource_id: int, spigot_name: str, email: str, bought_at: str, paid: float,
-                    tax: float) -> None:
+    def add_payment(self, resource_id: int, spigot_name: str, bought_at: str, paid: float, tax: float) -> None:
         with self.con.cursor(prepared=True) as cursor:
-            encoded_spigot_name = encode(spigot_name)
-            encoded_email = self.encrypt(email)
+            encoded_spigot_name = magic.encode(spigot_name)
 
             try:
-                cursor.execute("INSERT INTO `user_payments` VALUES (%s, %s, %s, %s, %s, %s);",
-                               [resource_id, encoded_spigot_name, encoded_email, bought_at, paid, tax])
+                cursor.execute("INSERT INTO `user_payments` VALUES (%s, %s, %s, %s, %s);",
+                               [resource_id, encoded_spigot_name, bought_at, paid, tax])
             except InterfaceError:
                 pass
-
-    def get_email(self, spigot_name: str) -> Optional[str]:
-        with self.con.cursor(prepared=True) as cursor:
-            encoded_spigot_name = encode(spigot_name)
-
-            cursor.execute(
-                "SELECT `email` FROM `user_payments` WHERE `spigot_name` = %s ORDER BY `bought` DESC LIMIT 1;",
-                [encoded_spigot_name])
-            result = cursor.fetchone()
-
-            if result is None:
-                return None
-
-            encrypted_mail = result[0]
-            return self.decrypt(encrypted_mail)
 
     def is_user_linked(self, user_id: int) -> bool:
         with self.con.cursor(prepared=True) as cursor:
@@ -143,7 +120,7 @@ class MySQL:
     def is_spigot_name_linked(self, spigot_name: str, do_hash: bool = True) -> bool:
         with self.con.cursor(prepared=True) as cursor:
             if do_hash:
-                spigot_name = encode(spigot_name)
+                spigot_name = magic.encode(spigot_name)
 
             cursor.execute("SELECT `discord_id` FROM `user_links` WHERE `spigot_name` LIKE %s LIMIT 1;",
                            [spigot_name])
@@ -175,3 +152,12 @@ class MySQL:
             for r in result:
                 rids.append(r[0])
             return rids
+
+    def is_premium_user(self, spigot_name: str) -> bool:
+        with self.con.cursor(prepared=True) as cursor:
+            encoded_spigot_name = magic.encode(spigot_name)
+
+            cursor.execute("SELECT 1 FROM `user_payments` WHERE `spigot_name` LIKE %s LIMIT 1;",
+                           [encoded_spigot_name])
+            result = cursor.fetchone()
+            return result is not None

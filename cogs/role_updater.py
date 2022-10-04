@@ -1,7 +1,7 @@
 from nextcord.ext import tasks
 from nextcord.ext.commands import Cog, Bot
 
-from core import files
+from core import files, log
 from core.service import services
 
 
@@ -24,7 +24,9 @@ class Scheduler(Cog):
             return
 
         self.paypal.update_transaction_data(silent=True)
-        self.discord.get_all_members(self.discord.update_member)
+        changed = await self.discord.update_members()
+        if changed > 0:
+            log.info(f"Updated {changed} member(s) automatically.")
 
 
 def setup(bot: Bot, **kwargs):
