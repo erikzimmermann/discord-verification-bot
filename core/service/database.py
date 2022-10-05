@@ -117,8 +117,9 @@ class MySQL:
             cursor.execute("DELETE FROM `user_links` WHERE `discord_id` = %s;",
                            [user_id])
 
-    def link_user(self, user_id: int, encoded_spigot_name: str) -> None:
+    def link_user(self, user_id: int, spigot_name: str) -> None:
         with self.con.cursor(prepared=True) as cursor:
+            encoded_spigot_name = magic.encode(spigot_name)
             try:
                 cursor.execute("INSERT INTO `user_links` (`discord_id`, `spigot_name`) VALUES (%s, %s);",
                                [user_id, encoded_spigot_name])

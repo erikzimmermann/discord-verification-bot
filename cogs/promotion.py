@@ -111,7 +111,10 @@ class Promote(Cog):
 
     @Cog.listener()
     async def on_interaction(self, it: nextcord.Interaction):
-        custom_id: str = it.data.get("custom_id")
+        custom_id = str(it.data.get("custom_id"))
+        if custom_id is None:
+            return
+
         if custom_id == "promotion_start":
             await self.start_promotion(it)
         elif custom_id == "no_conversation_access":
@@ -124,7 +127,7 @@ class Promote(Cog):
             user_id: str = custom_id[21:]
 
             if user_id.isnumeric():
-                await self.conversation_created(int(user_id))
+                await self.conversation_created(it, int(user_id))
 
     async def start_promotion(self, it: nextcord.Interaction) -> None:
         if not self.services.all_services_ready():
@@ -164,6 +167,8 @@ class Promote(Cog):
             content="Your request has been forwarded. Please wait, until the conversation is created."
         )
 
+        log.info(f"The user {it.user} requested a conversation.")
+
         admin: nextcord.Member = self.discord.get_spigot_member()
         admin_channel = admin.dm_channel
         if admin_channel is None:
@@ -197,10 +202,12 @@ class Promote(Cog):
                                    f"\n"
                                    f"Please be patient. Thank you! ✌")
 
-    async def conversation_created(self, user_id: int) -> None:
+    async def conversation_created(self, it: nextcord.Interaction, user_id: int) -> None:
         user = self.discord.get_member(user_id)
         if user is None:
             return
+
+        await it.message.edit(content=f"The user {user} has been informed about the conversation. 👍", view=None)
 
         channel = user.dm_channel
         if channel is None:
@@ -270,8 +277,8 @@ class Promote(Cog):
                 ephemeral=True
             )
 
-    async def promote(self, user: nextcord.Member, encoded_spigot_name: str) -> None:
-        self.database.link_user(user.id, encoded_spigot_name)
+    async def promote(self, user: nextcord.Member, spigot_name: str) -> None:
+        self.database.link_user(user.id, spigot_name)
         await self.discord.update_member(user)
         await self.update_interaction(
             user,
@@ -304,12 +311,12 @@ class Promote(Cog):
             # no key found
             return None, None
 
-        started_at, key, encoded_spigot_name = cache
+        started_at, key, spigot_name = cache
 
         if invalidate:
             self.sent_codes.pop(user.id)
 
-        return key, encoded_spigot_name
+        return key, spigot_name
 
 
 def setup(bot: Bot, **kwargs):
