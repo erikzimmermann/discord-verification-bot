@@ -83,8 +83,14 @@ class Discord:
     async def fetch_member(self, user_id: int) -> nextcord.Member:
         return await self.get_guild().fetch_member(user_id)
 
+    def get_member(self, user_id: int) -> nextcord.Member:
+        return self.get_guild().get_member(user_id)
+
     async def fetch_bot_member(self) -> nextcord.Member:
         return await self.fetch_member(self.bot.user.id)
+
+    def get_spigot_member(self) -> nextcord.Member:
+        return self.get_guild().get_member(self.config.spigot_author_id())
 
     async def update_members(self) -> int:
         changed = 0

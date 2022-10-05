@@ -16,7 +16,20 @@ def __valid_str__(text: str) -> bool:
     return text is not None and len(text) > 0
 
 
-def __get_contents_of_conversation_message__(body: str) -> Optional[str]:
+def __get_name__(body: str) -> Optional[str]:
+    first_comma = body.find(", ")
+    if first_comma == -1:
+        return None
+    first_comma += 2
+
+    first_space_after_name = body.find(" ", first_comma)
+    if first_space_after_name == -1:
+        return None
+
+    return body[first_comma:first_space_after_name]
+
+
+def __get_message__(body: str) -> Optional[str]:
     separation = "\n----------------------------------------------------------------------\n"
     message_from = body.find(separation)
     if message_from == -1:
@@ -56,12 +69,12 @@ class MailService:
                and __valid_str__(self.config.host()) \
                and self.config.port() > 0
 
-    def send_formatted_mail(self, user: nextcord.Member, email: str, spigot_name: str, promotion_key: int):
+    def send_formatted_mail(self, user: nextcord.Member, sender: str, spigot_name: str, promotion_key: int):
         email_content_html, email_content_plain = self.format_email(f"{user}", spigot_name, str(promotion_key))
         self.__send_email__(
             self.config.subject(),
             self.config.sender_name(),
-            email, email,
+            sender, sender,
             email_content_html,
             email_content_plain
         )
@@ -98,21 +111,25 @@ class MailService:
     def got_received_promotion_keys(self) -> dict[str, tuple[str, datetime]]:
         inbox = {}
 
-        for mail in self.__fetch_multipart_mails__(10):
+        for mail in self.__fetch_multipart_mails__(2):
             sender, subject, date, body = mail
 
             if sender != "Spigot Forums <forums@spigotmc.org>":
                 continue
 
-            if "started a conversation with you" not in subject:
+            if "started a conversation with you" not in subject \
+                    and "New reply to your conversation" not in subject:
                 continue
 
-            name = subject[:subject.find(" ")]
-            if len(name) == 0:
+            name = __get_name__(body)
+            if name is None:
                 continue
 
-            message = __get_contents_of_conversation_message__(body)
-            inbox[magic.encode(name)] = (message, date)
+            message = __get_message__(body)
+            if message is None:
+                continue
+
+            inbox[name] = (message, date)
         return inbox
 
     def __fetch_multipart_mails__(self, mail_count: int) \

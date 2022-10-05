@@ -29,7 +29,7 @@ class SpigotNameInput(Modal):
         await self.nested_callback(interaction, self.input.value.strip())
 
 
-class PromotionKeyInputButton(View):
+class ConversationStartButtons(View):
     def __init__(self, spigotmc_recipient: str, spigotmc_topic: str):
         super().__init__(timeout=None, auto_defer=False)
 
@@ -40,6 +40,58 @@ class PromotionKeyInputButton(View):
 
         self.add_item(nextcord.ui.Button(
             label="Verify",
-            url=url,
-            style=nextcord.ButtonStyle.success
+            url=url
+        ))
+
+        self.add_item(nextcord.ui.Button(
+            label="I cannot create a conversation",
+            style=nextcord.ButtonStyle.gray,
+            custom_id="no_conversation_access"
+        ))
+
+
+class NoAccessToNewConversations(View):
+    def __init__(self):
+        super().__init__(timeout=None, auto_defer=False)
+
+        self.add_item(nextcord.ui.Button(
+            label="Conversations",
+            url="https://www.spigotmc.org/conversations/?tab=inbox"
+        ))
+
+        self.add_item(nextcord.ui.Button(
+            label="I could not find any open conversation",
+            style=nextcord.ButtonStyle.gray,
+            custom_id="no_open_conversation"
+        ))
+
+
+class ViewConversations(View):
+    def __init__(self):
+        super().__init__(timeout=None, auto_defer=False)
+
+        self.add_item(nextcord.ui.Button(
+            label="Conversations",
+            url="https://www.spigotmc.org/conversations/?tab=inbox"
+        ))
+
+
+class CreateConversationForUser(View):
+    def __init__(self, spigot_name: str, spigotmc_topic: str, user_id: int):
+        super().__init__(timeout=None, auto_defer=False)
+
+        spigotmc_recipient = urllib.parse.quote_plus(spigot_name)
+        spigotmc_topic = urllib.parse.quote_plus(spigotmc_topic)
+
+        url = f"https://www.spigotmc.org/conversations/add?to={spigotmc_recipient}&title={spigotmc_topic}"
+
+        self.add_item(nextcord.ui.Button(
+            label="Create Conversation",
+            url=url
+        ))
+
+        self.add_item(nextcord.ui.Button(
+            label="Finished",
+            style=nextcord.ButtonStyle.success,
+            custom_id=f"conversation_created:{user_id}"
         ))
