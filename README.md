@@ -1,6 +1,6 @@
 # discord-verification-bot
 A Discord bot that verifies [SpigotMC](https://www.spigotmc.org/) resource purchases of Discord accounts by using the PayPal API
-to access transactions and an e-mail service to send verification keys to authorized users.  
+to access transactions and an e-mail service to receive SpigotMC conversation updates.  
 
 # Requirements
 * python
