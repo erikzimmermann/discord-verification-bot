@@ -129,7 +129,7 @@ class MailService:
             if message is None:
                 continue
 
-            inbox[name] = (message, date)
+            inbox[name.lower()] = (message, date)
         return inbox
 
     def __fetch_multipart_mails__(self, mail_count: int) \

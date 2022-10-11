@@ -41,7 +41,7 @@ class Promote(Cog):
             data = self.sent_codes[user_id]
             started, key, spigot_name = data
 
-            match = inbox.get(spigot_name)
+            match = inbox.get(spigot_name.lower())
             if match is not None:
                 message, date = match
 
