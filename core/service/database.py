@@ -1,3 +1,4 @@
+import datetime
 from typing import Optional
 
 import mysql.connector.errors
@@ -84,6 +85,12 @@ class MySQL:
             cursor.execute("SELECT `value` FROM `settings` WHERE `key` = %s LIMIT 1;", [key])
             result = cursor.fetchone()
             return default if result is None else result[0]
+
+    def get_latest_paypal_transaction_date(self) -> datetime.datetime:
+        with self.con.cursor(prepared=True) as cursor:
+            cursor.execute("SELECT MAX(`bought_at`) FROM `user_payments`;", [])
+            result = cursor.fetchone()
+            return self.first_paypal_fetch if result is None else result[0]
 
     def add_payment(self, resource_id: int, spigot_name: str, bought_at: str, paid: float, tax: float) -> None:
         with self.con.cursor(prepared=True) as cursor:

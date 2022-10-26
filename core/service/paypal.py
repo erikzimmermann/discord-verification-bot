@@ -23,16 +23,13 @@ def __count_days__(date_start: str, date_end: str) -> int:
     return abs(t_end - t_start).days
 
 
-def __ensure_date_limit__(date_start: str, date_end: str, callback) -> None:
-    datetime_start = __string_to_time__(date_start)
-    datetime_end = __string_to_time__(date_end)
-
+def __ensure_date_limit__(datetime_start: datetime, datetime_end: datetime, callback) -> None:
     while (datetime_end - datetime_start).days > 31:
         datetime_next = datetime_start + timedelta(days=31)
-        callback(__time_to_string__(datetime_start), __time_to_string__(datetime_next))
+        callback(datetime_start, datetime_next)
         datetime_start = datetime_next
 
-    callback(__time_to_string__(datetime_start), date_end)
+    callback(datetime_start, datetime_end)
 
 
 def access_dict(d: dict, *args) -> Optional[str]:
@@ -139,22 +136,23 @@ class ApiReader:
         if self.access_token is None:
             return
 
-        last_fetch = self.db.get_last_paypal_fetch()
+        last_fetch = self.db.get_latest_paypal_transaction_date()
 
         if fetch_buffer > 0:
-            rel_last_fetch = (datetime.now() - __string_to_time__(last_fetch)).seconds
+            rel_last_fetch = (datetime.now() - last_fetch).seconds
             if rel_last_fetch <= fetch_buffer:
                 return
 
-        now = __time_to_string__(datetime.now())
+        now = datetime.now()
+        now_s = __time_to_string__(now)
         __ensure_date_limit__(
             last_fetch,
             now,
             lambda start, end: self.__save_payments__(start, end, silent=silent)
         )
-        self.db.set_last_paypal_fetch(now)
+        self.db.set_last_paypal_fetch(now_s)
 
-    def __save_payments__(self, date_start: str, date_end: str, silent: bool = False) -> None:
+    def __save_payments__(self, date_start: datetime, date_end: datetime, silent: bool = False) -> None:
         for transaction in self.__fetch_transactions__(date_start, date_end, silent=silent):
             data = get_data_from_payment(transaction)
             if data is None:
@@ -163,9 +161,12 @@ class ApiReader:
             rid, spigot_name, transaction_id, transaction_info, bought_at, paid, tax = data
             self.db.add_payment(rid, spigot_name, bought_at, paid, tax)
 
-    def __fetch_transactions__(self, date_start: str, date_end: str, silent: bool = False) -> list[dict]:
+    def __fetch_transactions__(self, datetime_start: datetime, datetime_end: datetime, silent: bool = False) -> list[dict]:
         if self.access_token is None:
             raise Exception("Cannot fetch transactions without PayPal access token!")
+
+        date_start = __time_to_string__(datetime_start)
+        date_end = __time_to_string__(datetime_end)
 
         headers: dict = {
             "Content-Type": "application/json",
