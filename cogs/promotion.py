@@ -1,9 +1,11 @@
 import random
+import traceback
 from datetime import datetime
+from types import TracebackType, MethodDescriptorType
 from typing import Tuple, Union
 
 import nextcord
-from nextcord import SlashOption
+from nextcord import SlashOption, HTTPException
 from nextcord.ext import tasks
 from nextcord.ext.commands import Cog, Bot
 
@@ -28,9 +30,15 @@ class Promote(Cog):
 
     @Cog.listener()
     async def on_ready(self):
-        self.check_inbox.start()
+        self.safe_check_inbox.start()
 
     @tasks.loop(seconds=5)
+    async def safe_check_inbox(self):
+        try:
+            await self.check_inbox()
+        except Exception as e:
+            log.error("Got an error while checking the inbox:", e, f"\n{traceback.format_exc()}")
+
     async def check_inbox(self):
         if not self.services.all_services_ready():
             return
@@ -289,7 +297,11 @@ class Promote(Cog):
                                  view: nextcord.ui.View = None) -> None:
         plm: nextcord.PartialInteractionMessage = self.sent_messages.get(user.id)
         if plm:
-            await plm.edit(content=content, view=view)
+            try:
+                await plm.edit(content=content, view=view)
+            except HTTPException as h:
+                log.warning(f"Could not update interaction due to an HTTPException. "
+                            f"User={user}, invalidate={invalidate}, content='{content}'; Error: {h}")
 
         if invalidate:
             self.sent_messages.pop(user.id)
