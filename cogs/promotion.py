@@ -189,7 +189,7 @@ class Promote(Cog):
         )
 
         await admin_channel.send(
-            content=f"Hi! The discord user {it.user} requested a conversation for the Discord verification for your "
+            content=f"Hi! The discord user {it.user} requested a conversation for the Discord verification of your "
                     f"SpigotMC account.\n"
                     f"\n"
                     f"Please submit your promotion key in this conversation. "
