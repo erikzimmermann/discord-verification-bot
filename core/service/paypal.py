@@ -186,6 +186,18 @@ class ApiReader:
         r: requests.Response = requests.get(url=self.url + "/v1/reporting/transactions", params=params, headers=headers)
 
         data: dict = r.json()
+
+        if "error" in data:
+            if "error_description" in data:
+                if data["error"] == "invalid_token" and data["error_description"] == "Access Token not found in cache":
+                    # retry with new access token
+                    self.fetch_access_token()
+                    return self.__fetch_transactions__(datetime_start, datetime_end, silent)
+                else:
+                    log.warning(f"Could not fetch PayPal data. Error={data['error']}; Description={data['error_description']}")
+            else:
+                log.warning(f"Could not fetch PayPal data. Error={data}")
+
         if "transaction_details" in data:
             transactions: list[dict] = data["transaction_details"]
             return transactions
