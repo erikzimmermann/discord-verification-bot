@@ -182,9 +182,26 @@ class Promote(Cog):
         if admin_channel is None:
             admin_channel = await admin.create_dm()
 
+        channel = it.user.dm_channel
+        if channel is None:
+            channel = await it.user.create_dm()
+
+        try:
+            await channel.send(content="Hi 👋\n"
+                                       "\n"
+                                       f"Your verification key `{key}` is still valid and needs to be confirmed by "
+                                       f"sending it to us via the conversation that will be manually created soon.\n"
+                                       f"We will inform you as soon as you can submit your key.\n"
+                                       f"\n"
+                                       f"Please be patient. Thank you! ✌")
+            admin_message = f"The discord user {it.user} requests a conversation on SpigotMC.\n" \
+                            f"You can easily copy the text below as a placeholder."
+        except nextcord.errors.Forbidden:
+            admin_message = f"The discord user {it.user} requests a conversation on SpigotMC.\n" \
+                            f"You can easily copy the text below as a placeholder. This user could not be notified about the following key: {key}"
+
         await admin_channel.send(
-            content=f"The discord user {it.user} requests a conversation on SpigotMC.\n"
-                    f"You can easily copy the text below as a placeholder.",
+            content=admin_message,
             view=ui.CreateConversationForUser(spigot_name, self.config.spigotmc().topic(), it.user.id)
         )
 
@@ -197,18 +214,6 @@ class Promote(Cog):
                     f"\n"
                     f"Ignore this message if you haven't requested it."
         )
-
-        channel = it.user.dm_channel
-        if channel is None:
-            channel = await it.user.create_dm()
-
-        await channel.send(content="Hi 👋\n"
-                                   "\n"
-                                   f"Your verification key `{key}` is still valid and needs to be confirmed by "
-                                   f"sending it to us via the conversation that will be manually created soon.\n"
-                                   f"We will inform you as soon as you can submit your key.\n"
-                                   f"\n"
-                                   f"Please be patient. Thank you! ✌")
 
     async def conversation_created(self, it: nextcord.Interaction, user_id: int) -> None:
         user = self.discord.get_member(user_id)
