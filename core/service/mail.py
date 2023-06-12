@@ -161,7 +161,10 @@ class MailService:
                     if idx != -1:
                         date_info = date_info[:idx]
 
-                    date = datetime.strptime(date_info, "%a, %d %b %Y %H:%M:%S %z").astimezone().replace(tzinfo=None)
+                    try:
+                        date = datetime.strptime(date_info, "%a, %d %b %Y %H:%M:%S %z").astimezone().replace(tzinfo=None)
+                    except ValueError:
+                        date = datetime.strptime(date_info, "%a, %d %b %Y %H:%M:%S %Z").astimezone().replace(tzinfo=None)
 
                     if message.is_multipart():
                         for part in message.walk():
