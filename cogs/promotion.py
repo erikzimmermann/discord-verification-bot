@@ -1,7 +1,7 @@
 import random
+import threading
 import traceback
 from datetime import datetime
-from types import TracebackType, MethodDescriptorType
 from typing import Tuple, Union
 
 import nextcord
@@ -27,10 +27,12 @@ class Promote(Cog):
         self.sent_codes = {}
         self.sent_messages = {}
         self.reserved = []
+        self.inbox: dict[str, tuple[str, datetime]] = dict()
 
     @Cog.listener()
     async def on_ready(self):
         self.safe_check_inbox.start()
+        self.load_inbox.start()
 
     @tasks.loop(seconds=5)
     async def safe_check_inbox(self):
@@ -39,17 +41,27 @@ class Promote(Cog):
         except Exception as e:
             log.error("Got an error while checking the inbox:", e, f"\n{traceback.format_exc()}")
 
+    @tasks.loop(seconds=10)
+    async def load_inbox(self):
+        try:
+            inbox_thread = threading.Thread(target=self.get_inbox)
+            inbox_thread.start()
+        except Exception as e:
+            log.error("Got an error while loading the inbox:", e, f"\n{traceback.format_exc()}")
+
+    def get_inbox(self):
+        self.inbox = self.mail_service.got_received_promotion_keys()
+
     async def check_inbox(self):
         if not self.services.all_services_ready():
             return
 
         to_be_removed = []
-        inbox = self.mail_service.got_received_promotion_keys()
         for user_id in self.sent_codes.keys():
             data = self.sent_codes[user_id]
             started, key, spigot_name = data
 
-            match = inbox.get(spigot_name.lower())
+            match = self.inbox.get(spigot_name.lower())
             if match is not None:
                 message, date = match
 
