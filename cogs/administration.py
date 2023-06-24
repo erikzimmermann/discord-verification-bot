@@ -16,6 +16,33 @@ class Control(Cog):
         self.discord = self.services.discord
 
     @nextcord.slash_command(
+        name="has_privileges",
+        description="Checks if a specific SpigotMC account has premium privileges.",
+        default_member_permissions=nextcord.Permissions(administrator=True),
+        dm_permission=False
+    )
+    async def has_privileges(
+            self, it: nextcord.interactions.Interaction,
+            spigot_name: str = SlashOption(
+                description="The SpigotMC account name which should be checked.",
+                required=True,
+                min_length=2,
+                max_length=100
+            )
+    ):
+        has_privileges = self.database.is_premium_user(spigot_name)
+        linked = self.database.is_spigot_name_linked(spigot_name)
+
+        message = f"""Following information has been found about the SpigotMC account '{spigot_name}':
+        has_privileges: {has_privileges}
+        linked: {linked}"""
+
+        await it.response.send_message(
+            content=message,
+            ephemeral=True
+        )
+
+    @nextcord.slash_command(
         name="unlink",
         description="Unlinks a Discord account from a SpigotMC account and removes their premium roles.",
         default_member_permissions=nextcord.Permissions(administrator=True),
