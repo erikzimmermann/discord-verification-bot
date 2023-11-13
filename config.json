@@ -26,6 +26,15 @@
     "secret": "",
     "begin_date": "2021-01-01T00:00:00Z"
   },
+  "stripe": {
+    "enabled": true,
+    "custom_field": "spigotmcusername",
+    "payment_links": {
+      "https://buy.stripe.com/...": "12345",
+      "https://buy.stripe.com/....": "12345"
+    },
+    "secret": ""
+  },
   "spigotmc": {
     "recipient": "Your SpigotMC name",
     "topic": "Discord Verification"

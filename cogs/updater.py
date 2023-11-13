@@ -12,6 +12,7 @@ class Scheduler(Cog):
         self.services: services.Holder = kwargs["services"]
 
         self.paypal = self.services.paypal
+        self.stripe = self.services.stripe
         self.discord = self.services.discord
 
     @Cog.listener()
@@ -24,6 +25,9 @@ class Scheduler(Cog):
             return
 
         self.paypal.update_transaction_data(silent=True)
+        if self.stripe:
+            self.stripe.update(silent=True)
+
         changed = await self.discord.update_members()
         if changed > 0:
             log.info(f"Updated {changed} member(s) automatically.")

@@ -141,6 +141,23 @@ class PayPal(Wrapper):
 
     def begin_date(self) -> str:
         return self.file["begin_date"]
+
+
+class Stripe(Wrapper):
+    def __init__(self, file: dict):
+        super().__init__(file, "stripe")
+
+    def enabled(self) -> bool:
+        return self.file["enabled"]
+
+    def custom_field(self) -> str:
+        return self.file["custom_field"]
+
+    def secret(self) -> str:
+        return self.file["secret"]
+
+    def payment_links(self) -> dict:
+        return self.file["payment_links"]
         
 
 class Database(Wrapper):
@@ -186,6 +203,9 @@ class Config(File):
         
     def paypal(self) -> PayPal:
         return PayPal(self.file)
+
+    def stripe(self) -> Stripe:
+        return Stripe(self.file)
         
     def database(self) -> Database:
         return Database(self.file)

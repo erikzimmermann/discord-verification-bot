@@ -1,9 +1,7 @@
-from datetime import datetime
-
 from nextcord.ext.commands import Bot
 
 from core import files, log
-from core.service import paypal, discord_utils, database, mail
+from core.service import paypal, discord_utils, database, mail, stripe
 
 
 class Holder:
@@ -20,11 +18,19 @@ class Holder:
             config.paypal().secret()
         )
 
+        if config.stripe().enabled():
+            self.stripe = stripe.ApiReader(
+                self.database,
+                config.stripe().secret(),
+                config.stripe().custom_field(),
+                config.stripe().payment_links()
+            )
+
     def all_services_ready(self):
         return self.database.has_valid_con() \
-               and self.paypal.access_token is not None \
-               and self.mail.is_ready() \
-               and self.discord.is_ready()
+            and self.paypal.access_token is not None \
+            and self.mail.is_ready() \
+            and self.discord.is_ready()
 
     async def enable_all(self):
         log.info("Enabling services...")
@@ -36,6 +42,9 @@ class Holder:
         self.paypal.fetch_access_token()
         # Access DB for last fetch and update transaction data
         self.paypal.update_transaction_data()
+
+        if self.stripe:
+            self.stripe.update()
 
         # fetch all necessary roles etc.
         await self.discord.fetch()

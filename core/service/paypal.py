@@ -9,17 +9,17 @@ from core.service import database
 time_format = "%Y-%m-%dT%H:%M:%SZ"
 
 
-def __time_to_string__(date: datetime) -> str:
+def time_to_string__(date: datetime) -> str:
     return datetime.strftime(date, time_format)
 
 
-def __string_to_time__(date: str) -> datetime:
+def string_to_time__(date: str) -> datetime:
     return datetime.strptime(date, time_format)
 
 
 def __count_days__(date_start: str, date_end: str) -> int:
-    t_start: datetime = __string_to_time__(date_start)
-    t_end: datetime = __string_to_time__(date_end)
+    t_start: datetime = string_to_time__(date_start)
+    t_end: datetime = string_to_time__(date_end)
     return abs(t_end - t_start).days
 
 
@@ -144,7 +144,7 @@ class ApiReader:
                 return
 
         now = datetime.now()
-        now_s = __time_to_string__(now)
+        now_s = time_to_string__(now)
         __ensure_date_limit__(
             last_fetch,
             now,
@@ -159,14 +159,14 @@ class ApiReader:
                 continue
 
             rid, spigot_name, transaction_id, transaction_info, bought_at, paid, tax = data
-            self.db.add_payment(rid, spigot_name, bought_at, paid, tax)
+            self.db.add_payment(rid, spigot_name, bought_at, paid, tax, "paypal")
 
     def __fetch_transactions__(self, datetime_start: datetime, datetime_end: datetime, silent: bool = False) -> list[dict]:
         if self.access_token is None:
             raise Exception("Cannot fetch transactions without PayPal access token!")
 
-        date_start = __time_to_string__(datetime_start)
-        date_end = __time_to_string__(datetime_end)
+        date_start = time_to_string__(datetime_start)
+        date_end = time_to_string__(datetime_end)
 
         headers: dict = {
             "Content-Type": "application/json",
@@ -182,7 +182,7 @@ class ApiReader:
         }
 
         if not silent:
-            log.info(f"Fetching transaction data in range {date_start} to {date_end}")
+            log.info(f"Fetching PayPal transaction data in range {date_start} to {date_end}")
         r: requests.Response = requests.get(url=self.url + "/v1/reporting/transactions", params=params, headers=headers)
 
         data: dict = r.json()

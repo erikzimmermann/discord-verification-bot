@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional
+from typing import Optional, Literal
 
 import mysql.connector.errors
 from mysql import connector
@@ -49,6 +49,7 @@ class MySQL:
                            "bought_at timestamp NOT NULL,"
                            "paid FLOAT(6, 2) NOT NULL,"
                            "tax FLOAT(6,2) NOT NULL,"
+                           "service VARCHAR(30) NOT NULL,"
                            "PRIMARY KEY (resource, spigot_name),"
                            "UNIQUE (resource, spigot_name)"
                            ");")
@@ -70,6 +71,12 @@ class MySQL:
     def set_last_paypal_fetch(self, date) -> None:
         self.__update_setting__("last_paypal_fetch", date)
 
+    def get_last_stripe_fetch(self) -> str:
+        return self.__get_setting__("last_stripe_fetch", None)
+
+    def set_last_stripe_fetch(self, checkout_id: str) -> None:
+        self.__update_setting__("last_stripe_fetch", checkout_id)
+
     def __update_setting__(self, key: str, value: str) -> None:
         if len(key) > 100:
             raise Exception("Key length must be <= 100")
@@ -80,7 +87,7 @@ class MySQL:
             cursor.execute("INSERT INTO `settings` VALUES (%s, %s) ON DUPLICATE KEY UPDATE `value`=%s;",
                            [key, value, value])
 
-    def __get_setting__(self, key: str, default: str) -> str:
+    def __get_setting__(self, key: str, default: Optional[str]) -> Optional[str]:
         with self.con.cursor(prepared=True) as cursor:
             cursor.execute("SELECT `value` FROM `settings` WHERE `key` = %s LIMIT 1;", [key])
             result = cursor.fetchone()
@@ -92,13 +99,14 @@ class MySQL:
             result = cursor.fetchone()
             return self.first_paypal_fetch if result is None else result[0]
 
-    def add_payment(self, resource_id: int, spigot_name: str, bought_at: str, paid: float, tax: float) -> None:
+    def add_payment(self, resource_id: int, spigot_name: str, bought_at: str, paid: float, tax: float,
+                    service: Literal["paypal", "stripe"]) -> None:
         with self.con.cursor(prepared=True) as cursor:
             encoded_spigot_name = magic.encode(spigot_name)
 
             try:
-                cursor.execute("INSERT INTO `user_payments` VALUES (%s, %s, %s, %s, %s);",
-                               [resource_id, encoded_spigot_name, bought_at, paid, tax])
+                cursor.execute("INSERT INTO `user_payments` VALUES (%s, %s, %s, %s, %s, %s);",
+                               [resource_id, encoded_spigot_name, bought_at, paid, tax, service])
             except Exception:
                 pass
 
