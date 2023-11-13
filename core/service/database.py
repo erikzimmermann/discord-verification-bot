@@ -99,7 +99,7 @@ class MySQL:
             try:
                 cursor.execute("INSERT INTO `user_payments` VALUES (%s, %s, %s, %s, %s);",
                                [resource_id, encoded_spigot_name, bought_at, paid, tax])
-            except InterfaceError:
+            except Exception:
                 pass
 
     def is_user_linked(self, user_id: int) -> bool:
