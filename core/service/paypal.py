@@ -7,6 +7,7 @@ from core import log, magic
 from core.service import database
 
 time_format = "%Y-%m-%dT%H:%M:%SZ"
+time_format_fallback = "%Y-%m-%dT%H:%M:%S%z"
 
 
 def time_to_string__(date: datetime) -> str:
@@ -14,7 +15,10 @@ def time_to_string__(date: datetime) -> str:
 
 
 def string_to_time__(date: str) -> datetime:
-    return datetime.fromisoformat(date)
+    try:
+        return datetime.strptime(date, time_format)
+    except ValueError:
+        return datetime.strptime(date, time_format_fallback)
 
 
 def __count_days__(date_start: str, date_end: str) -> int:
