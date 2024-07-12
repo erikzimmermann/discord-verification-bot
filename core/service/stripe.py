@@ -83,7 +83,7 @@ class ApiReader:
         tax = -checkout["payment_intent"]["latest_charge"]["balance_transaction"]["fee"] / 100.0
 
         if spigot and resource_id and created and paid and tax:
-            self.db.add_payment(resource_id, spigot, paypal.time_to_string__(created), paid, tax, "stripe")
+            self.db.add_payment(resource_id, spigot, created, paid, tax, "stripe")
 
     def __fetch_all_checkouts(self, last_id_fetched: str) -> List:
         items, next_page = self.__fetch_completed_checkouts(last_id_fetched)

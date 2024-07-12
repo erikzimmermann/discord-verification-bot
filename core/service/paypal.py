@@ -14,7 +14,7 @@ def time_to_string__(date: datetime) -> str:
 
 
 def string_to_time__(date: str) -> datetime:
-    return datetime.strptime(date, time_format)
+    return datetime.fromisoformat(date)
 
 
 def __count_days__(date_start: str, date_end: str) -> int:
@@ -159,7 +159,7 @@ class ApiReader:
                 continue
 
             rid, spigot_name, transaction_id, transaction_info, bought_at, paid, tax = data
-            self.db.add_payment(rid, spigot_name, bought_at, paid, tax, "paypal")
+            self.db.add_payment(rid, spigot_name, string_to_time__(bought_at), paid, tax, "paypal")
 
     def __fetch_transactions__(self, datetime_start: datetime, datetime_end: datetime, silent: bool = False) -> list[dict]:
         if self.access_token is None:

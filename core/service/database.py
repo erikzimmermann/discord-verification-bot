@@ -99,7 +99,7 @@ class MySQL:
             result = cursor.fetchone()
             return self.first_paypal_fetch if result is None else result[0]
 
-    def add_payment(self, resource_id: int, spigot_name: str, bought_at: str, paid: float, tax: float,
+    def add_payment(self, resource_id: int, spigot_name: str, bought_at: datetime.datetime, paid: float, tax: float,
                     service: Literal["paypal", "stripe"]) -> None:
         with self.con.cursor(prepared=True) as cursor:
             encoded_spigot_name = magic.encode(spigot_name)
@@ -107,8 +107,8 @@ class MySQL:
             try:
                 cursor.execute("INSERT INTO `user_payments` VALUES (%s, %s, %s, %s, %s, %s);",
                                [resource_id, encoded_spigot_name, bought_at, paid, tax, service])
-            except Exception:
-                pass
+            except Exception as e:
+                print(e)
 
     def is_user_linked(self, user_id: int) -> bool:
         with self.con.cursor(prepared=True) as cursor:
