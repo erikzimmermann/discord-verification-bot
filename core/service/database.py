@@ -107,6 +107,9 @@ class MySQL:
             try:
                 cursor.execute("INSERT INTO `user_payments` VALUES (%s, %s, %s, %s, %s, %s);",
                                [resource_id, encoded_spigot_name, bought_at, paid, tax, service])
+            except InterfaceError as e:
+                if "Duplicate entry" not in e.msg:
+                    print(e)
             except Exception as e:
                 print(e)
 
