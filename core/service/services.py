@@ -1,3 +1,5 @@
+from typing import Dict
+
 from nextcord.ext.commands import Bot
 
 from core import files, log
@@ -26,11 +28,16 @@ class Holder:
                 config.stripe().payment_links()
             )
 
+    def service_status(self) -> Dict[str, bool]:
+        return {
+            "database": self.database.has_valid_con(),
+            "paypal": self.paypal.access_token is not None,
+            "mail": self.mail.is_ready(),
+            "discord": self.discord.is_ready(),
+        }
+
     def all_services_ready(self):
-        return self.database.has_valid_con() \
-            and self.paypal.access_token is not None \
-            and self.mail.is_ready() \
-            and self.discord.is_ready()
+        return all(self.service_status().values())
 
     async def enable_all(self):
         log.info("Enabling services...")

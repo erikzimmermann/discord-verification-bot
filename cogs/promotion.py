@@ -159,6 +159,7 @@ class Promote(Cog):
                 ),
                 ephemeral=True
             )
+            log.warning(f"The user {it.user.name} could not start a promotion because one of the services is down ({self.services.service_status()}).")
             return
 
         await it.response.send_modal(ui.SpigotNameInput(self.send_promotion_key))
