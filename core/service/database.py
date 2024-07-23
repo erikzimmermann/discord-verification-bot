@@ -14,8 +14,9 @@ class MySQL:
         self.config = config.database()
         self.con: Optional[mysql.connector.MySQLConnection] = None
 
-    def build_connection(self) -> None:
-        log.info("Connecting to mysql database...")
+    def build_connection(self, logging: bool = True) -> None:
+        if logging:
+            log.info("Connecting to mysql database...")
 
         password = self.config.password()
         if password is not None and len(password) == 0:
@@ -33,10 +34,18 @@ class MySQL:
 
             self.__create_tables__()
         except mysql.connector.errors.ProgrammingError:
-            log.error("Could not connect to your mysql database. Please check your credentials!")
+            if logging:
+                log.error("Could not connect to your mysql database. Please check your credentials!")
+            self.con = None
 
     def has_valid_con(self):
-        return self.con is not None and self.con.is_connected()
+        if self.con:
+            if self.con.is_connected():
+                return True
+
+            self.build_connection(False)
+            return self.con is not None
+        return False
 
     def __create_tables__(self) -> None:
         if self.con is None:
