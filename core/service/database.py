@@ -80,7 +80,7 @@ class MySQL:
     def set_last_paypal_fetch(self, date) -> None:
         self.__update_setting__("last_paypal_fetch", date)
 
-    def get_last_stripe_fetch(self) -> str:
+    def get_last_stripe_fetch(self) -> Optional[str]:
         return self.__get_setting__("last_stripe_fetch", None)
 
     def set_last_stripe_fetch(self, checkout_id: str) -> None:
@@ -113,6 +113,7 @@ class MySQL:
         with self.con.cursor(prepared=True) as cursor:
             encoded_spigot_name = magic.encode(spigot_name)
 
+            print("adding", spigot_name, "for", resource_id, "bought:", bought_at, "service", service)
             try:
                 cursor.execute("INSERT INTO `user_payments` VALUES (%s, %s, %s, %s, %s, %s);",
                                [resource_id, encoded_spigot_name, bought_at, paid, tax, service])

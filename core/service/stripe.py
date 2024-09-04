@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple, Optional
 import requests
 
 from core import log
-from core.service import database, paypal
+from core.service import database
 
 
 class ApiReader:
@@ -20,10 +20,12 @@ class ApiReader:
 
     def update(self, silent: bool = False) -> None:
         if not silent:
-            log.info(f"Fetching Stripe transaction data")
+            log.info(f"Fetching Stripe transaction data...")
 
         last_id = self.db.get_last_stripe_fetch()
-        for checkout in self.__fetch_all_checkouts(last_id):
+        # must be reversed since stripe returns the most recent transactions first, and
+        # the `last_id` value must be set correctly
+        for checkout in reversed(self.__fetch_all_checkouts(last_id)):
             self.add_checkout(checkout)
             last_id = checkout["id"]
 
@@ -85,16 +87,16 @@ class ApiReader:
         if spigot and resource_id and created and paid and tax:
             self.db.add_payment(resource_id, spigot, created, paid, tax, "stripe")
 
-    def __fetch_all_checkouts(self, last_id_fetched: str) -> List:
-        items, next_page = self.__fetch_completed_checkouts(last_id_fetched)
+    def __fetch_all_checkouts(self, last_id_fetched: Optional[str]) -> List:
+        items, previous_page = self.__fetch_completed_checkouts(last_id_fetched)
 
-        while next_page is not None:
-            more_items, next_page = self.__fetch_completed_checkouts(next_page)
+        while previous_page is not None:
+            more_items, previous_page = self.__fetch_completed_checkouts(previous_page)
             items.extend(more_items)
 
         return items
 
-    def __fetch_completed_checkouts(self, starting_after: Optional[str] = None) -> Tuple[List, Optional[str]]:
+    def __fetch_completed_checkouts(self, ending_before: Optional[str] = None) -> Tuple[List, Optional[str]]:
         request_headers: dict = {
             "Accept": "application/json",
             "Authorization": f"Bearer {self.secret}"
@@ -102,7 +104,8 @@ class ApiReader:
 
         request_data: dict = {
             "limit": 50,
-            "starting_after": starting_after,
+            "status": "complete",
+            "ending_before": ending_before,
             "expand[]": "data.payment_intent.latest_charge.balance_transaction",
         }
 
@@ -115,8 +118,12 @@ class ApiReader:
         res = r.json()
         if "data" in res:
             items = res["data"]
-            return ([item for item in items if "status" in item and item["status"] == "complete"],
-                    items[-1]["id"] if res["has_more"] else None)
+
+            items = [i for i in items if i["payment_status"] == "paid"]
+            items = [i for i in items if i["payment_intent"]["latest_charge"]["amount_refunded"] == 0]
+            items = [i for i in items if i["payment_intent"]["latest_charge"]["amount"] == i["payment_intent"]["latest_charge"]["amount_captured"]]
+
+            return items, items[0]["id"] if res["has_more"] else None
         elif "error" in res:
             logging.warning(
                 "Could not fetch checkouts. " + res["error"]["message"] + " " + res["error"]["request_log_url"])
