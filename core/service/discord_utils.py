@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Callable, Coroutine, Any
+from typing import Optional, Tuple, Set
 
 import nextcord
 from nextcord.ext.commands import Bot
@@ -96,16 +96,11 @@ class Discord:
         changed = 0
 
         roles, premium_role = await self.__fetch_roles__()
-        members = []
+        members: Set[nextcord.Member] = set()
 
         for role in roles.values():
-            for m in role.members:
-                if m not in members:
-                    members.append(m)
-
-        for m in premium_role.members:
-            if m not in members:
-                members.append(m)
+            members.update(role.members)
+        members.update(premium_role.members)
 
         for m in members:
             if await self.update_member(m):
