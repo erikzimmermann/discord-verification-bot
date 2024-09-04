@@ -113,7 +113,6 @@ class MySQL:
         with self.con.cursor(prepared=True) as cursor:
             encoded_spigot_name = magic.encode(spigot_name)
 
-            print("adding", spigot_name, "for", resource_id, "bought:", bought_at, "service", service)
             try:
                 cursor.execute("INSERT INTO `user_payments` VALUES (%s, %s, %s, %s, %s, %s);",
                                [resource_id, encoded_spigot_name, bought_at, paid, tax, service])
