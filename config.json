@@ -11,7 +11,8 @@
       "title": "\ud83d\udc8e Premium Promotion",
       "content": "If you already purchased one of our plugins and haven't upgraded your Discord account to premium yet, you're definitely looking in the right place! By promoting yourself you **get access to** the following things:\n\n<:dot:1024566211209597009>Fast responding hotfixes\n<:dot:1024566211209597009>Official releases\n<:dot:1024566211209597009>Colored premium rank\n\n**How it works**\nAfter clicking on the button below, you will be asked to enter your SpigotMC user name. The bot then searches for a payment that was registered in combination with your name. If there is a match, a verification code will be generated which has to be forwarded to us via a conversation on SpigotMC. The entire process doesn't take longer than a minute!\n\n**Bought another plugin?**\nIn case you bought another plugin, you can simply update your roles by starting another promotion. You won't have to verify your SpigotMC account again if you already did that."
     },
-    "spigot_author_id": 0
+    "spigot_author_id": 0,
+    "admin_channel": 0
   },
   "email_service": {
     "email": "mail@address.com",

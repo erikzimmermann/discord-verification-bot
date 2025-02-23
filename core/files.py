@@ -104,6 +104,9 @@ class Discord(Wrapper):
     def spigot_author_id(self) -> int:
         return int(self.file["spigot_author_id"])
 
+    def admin_channel(self) -> int:
+        return int(self.file["admin_channel"])
+
 
 class EmailService(Wrapper):
     def __init__(self, file: dict):

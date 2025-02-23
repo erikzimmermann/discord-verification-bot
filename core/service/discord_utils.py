@@ -92,6 +92,9 @@ class Discord:
     def get_spigot_member(self) -> nextcord.Member:
         return self.get_guild().get_member(self.config.spigot_author_id())
 
+    def get_admin_channel(self) -> nextcord.TextChannel:
+        return self.get_guild().get_channel(self.config.admin_channel())
+
     async def update_members(self) -> int:
         changed = 0
 

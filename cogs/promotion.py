@@ -2,10 +2,10 @@ import random
 import threading
 import traceback
 from datetime import datetime
-from typing import Tuple, Union
+from typing import Tuple, Union, Dict
 
 import nextcord
-from nextcord import SlashOption, HTTPException
+from nextcord import SlashOption, HTTPException, Message, errors
 from nextcord.ext import tasks
 from nextcord.ext.commands import Cog, Bot
 
@@ -26,6 +26,7 @@ class Promote(Cog):
 
         self.sent_codes = {}
         self.sent_messages = {}
+        self.sent_admin_messages: Dict[int, Message] = {}
         self.reserved = []
         self.inbox: dict[str, tuple[str, datetime]] = dict()
 
@@ -190,11 +191,6 @@ class Promote(Cog):
 
         log.info(f"The user {it.user} requested a conversation.")
 
-        admin: nextcord.Member = self.discord.get_spigot_member()
-        admin_channel = admin.dm_channel
-        if admin_channel is None:
-            admin_channel = await admin.create_dm()
-
         channel = it.user.dm_channel
         if channel is None:
             channel = await it.user.create_dm()
@@ -213,12 +209,16 @@ class Promote(Cog):
             admin_message = f"The discord user {it.user} requests a conversation on SpigotMC.\n" \
                             f"You can easily copy the text below as a placeholder. This user could not be notified about the following key: {key}"
 
+        admin_channel: nextcord.TextChannel = self.discord.get_admin_channel()
+        if admin_channel is None:
+            raise Exception("No admin channel available!")
+
         await admin_channel.send(
             content=admin_message,
             view=ui.CreateConversationForUser(spigot_name, self.config.spigotmc().topic(), it.user.id)
         )
 
-        await admin_channel.send(
+        msg = await admin_channel.send(
             content=f"Hi! The discord user {it.user} requested a conversation for the Discord verification of your "
                     f"SpigotMC account.\n"
                     f"\n"
@@ -227,24 +227,31 @@ class Promote(Cog):
                     f"\n"
                     f"Ignore this message if you haven't requested it."
         )
+        self.sent_admin_messages[it.user.id] = msg
 
     async def conversation_created(self, it: nextcord.Interaction, user_id: int) -> None:
         user = self.discord.get_member(user_id)
         if user is None:
             return
 
-        await it.message.edit(content=f"The user {user} has been informed about the conversation. 👍", view=None)
+        try:
+            channel = user.dm_channel
+            if channel is None:
+                channel = await user.create_dm()
 
-        channel = user.dm_channel
-        if channel is None:
-            channel = await user.create_dm()
+            await channel.send(
+                content="Hi again!\n"
+                        "Your conversation has been created. 🤩\n"
+                        "Please take a look at your inbox and don't forget to copy your key from the message above. 📫",
+                view=ui.ViewConversations()
+            )
 
-        await channel.send(
-            content="Hi again!\n"
-                    "Your conversation has been created. 🤩\n"
-                    "Please take a look at your inbox and don't forget to copy your key from the message above. 📫",
-            view=ui.ViewConversations()
-        )
+            await it.message.edit(content=f"The user {user} has been informed about the conversation. 👍", view=None)
+        except errors.Forbidden:
+            await it.message.edit(content=f"The user {user} could not be informed about the conversation due to their discord privacy settings.", view=None)
+
+        if user_id in self.sent_admin_messages:
+            await self.sent_admin_messages[user_id].delete()
 
     async def send_promotion_key(self, it: nextcord.Interaction, spigot_name: str):
         user: nextcord.Member = it.user
